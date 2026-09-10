@@ -1,0 +1,47 @@
+# dvc.yaml
+stages:
+  validate_data:
+    cmd: python -m ml_dice_game.dataset
+    deps:
+      - data/raw/dataset.csv
+      - ml_dice_game/dataset.py
+    params:
+      - random_state
+    outs:
+      - data/interim/validation_report.json
+
+  split_data:
+    cmd: python -m ml_dice_game.features
+    deps:
+      - data/raw/dataset.csv
+      - ml_dice_game/features.py
+      - data/interim/validation_report.json
+    params:
+      - random_state
+      - split.test_size
+      - split.stratify_col
+      - split.cv_n_splits
+    outs:
+      - data/processed/train.csv
+      - data/processed/test.csv
+
+  train_and_tune:
+    cmd: python -m ml_dice_game.modeling.train
+    deps:
+      - data/processed/train.csv
+      - data/processed/test.csv
+      - ml_dice_game/modeling/train.py
+    params:
+      - random_state
+      - train
+      - tune
+      - mlflow.experiment_name
+      - mlflow.registered_model_name
+    outs:
+      - models/model.pkl
+    metrics:
+      - reports/metrics.json:
+          cache: false
+    plots:
+      - reports/figures/metrics_comparison.png:
+          cache: false

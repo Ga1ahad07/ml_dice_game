@@ -53,7 +53,27 @@ create_environment:
 	@bash -c "if [ ! -z `which virtualenvwrapper.sh` ]; then source `which virtualenvwrapper.sh`; mkvirtualenv $(PROJECT_NAME) --python=$(PYTHON_INTERPRETER); else mkvirtualenv.bat $(PROJECT_NAME) --python=$(PYTHON_INTERPRETER); fi"
 	@echo ">>> New virtualenv created. Activate with:\nworkon $(PROJECT_NAME)"
 	
+## Reproducir el pipeline de datos/modelo con DVC
+.PHONY: pipeline
+pipeline:
+	dvc repro
 
+## Levantar la UI de MLflow (tracking local en ./mlruns)
+.PHONY: mlflow-ui
+mlflow-ui:
+	mlflow ui --backend-store-uri ./mlruns
+
+## Levantar la API de inferencia
+.PHONY: serve
+serve:
+	uvicorn api.main:app --reload --port 8000
+
+## Promover a Production el último modelo registrado (requiere version)
+.PHONY: promote
+promote:
+	python -c "from ml_dice_game.modeling.tracking import ExperimentTracker; \
+	from ml_dice_game.config import load_params; p = load_params()['mlflow']; \
+	ExperimentTracker(p['experiment_name']).promote_to_production(p['registered_model_name'], $(VERSION))"
 
 
 #################################################################################

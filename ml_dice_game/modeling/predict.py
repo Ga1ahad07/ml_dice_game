@@ -1,30 +1,22 @@
 from pathlib import Path
-
+import joblib
+import pandas as pd
 from loguru import logger
-from tqdm import tqdm
-import typer
 
-from ml_dice_game.config import MODELS_DIR, PROCESSED_DATA_DIR
-
-app = typer.Typer()
+from ml_dice_game.config import MODELS_DIR
 
 
-@app.command()
-def main(
-    # ---- REPLACE DEFAULT PATHS AS APPROPRIATE ----
-    features_path: Path = PROCESSED_DATA_DIR / "test_features.csv",
-    model_path: Path = MODELS_DIR / "model.pkl",
-    predictions_path: Path = PROCESSED_DATA_DIR / "test_predictions.csv",
-    # -----------------------------------------
-):
-    # ---- REPLACE THIS WITH YOUR OWN CODE ----
-    logger.info("Performing inference for model...")
-    for i in tqdm(range(10), total=10):
-        if i == 5:
-            logger.info("Something happened for iteration 5.")
-    logger.success("Inference complete.")
-    # -----------------------------------------
+class ModelPredictor:
+    def __init__(self, model_path: Path = MODELS_DIR / "model.pkl"):
+        self.model_path = model_path
+        self._model = None
 
+    @property
+    def model(self):
+        if self._model is None:
+            logger.info(f"Cargando modelo desde {self.model_path}")
+            self._model = joblib.load(self.model_path)
+        return self._model
 
-if __name__ == "__main__":
-    app()
+    def predict(self, X: pd.DataFrame) -> pd.Series:
+        return pd.Series(self.model.predict(X), index=X.index, name="PUNTAJE_pred")
