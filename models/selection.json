@@ -1,0 +1,17 @@
+{
+  "selected_model": "XGBoost",
+  "model_path": "D:\\UMSS\\Diplomado\\MODULO 6\\ml_dice_game\\models\\base\\xgboost.pkl",
+  "selection_metric": "R2",
+  "metrics": {
+    "RandomForest": {
+      "R2": 0.7382011422034973,
+      "MAE": 1.7920274914089347,
+      "RMSE": 2.2860805873986476
+    },
+    "XGBoost": {
+      "R2": 0.9157441854476929,
+      "MAE": 0.9456977844238281,
+      "RMSE": 1.2969030813830753
+    }
+  }
+}

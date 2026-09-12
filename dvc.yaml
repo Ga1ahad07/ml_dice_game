@@ -25,23 +25,82 @@ stages:
       - data/processed/train.csv
       - data/processed/test.csv
 
-  train_and_tune:
-    cmd: python -m ml_dice_game.modeling.train
+  train_random_forest:
+    cmd: python -m ml_dice_game.modeling.train_random_forest
     deps:
       - data/processed/train.csv
       - data/processed/test.csv
-      - ml_dice_game/modeling/train.py
+      - ml_dice_game/modeling/common.py
+      - ml_dice_game/modeling/train_model.py
+      - ml_dice_game/modeling/train_random_forest.py
     params:
       - random_state
-      - train
+      - train.rf
+      - split.cv_n_splits
+    outs:
+      - models/base/random_forest.pkl
+      - models/base/random_forest.features.json
+    metrics:
+      - reports/metrics/random_forest.json:
+          cache: false
+
+  train_xgboost:
+    cmd: python -m ml_dice_game.modeling.train_xgboost
+    deps:
+      - data/processed/train.csv
+      - data/processed/test.csv
+      - ml_dice_game/modeling/common.py
+      - ml_dice_game/modeling/train_model.py
+      - ml_dice_game/modeling/train_xgboost.py
+    params:
+      - random_state
+      - train.xgb
+      - split.cv_n_splits
+    outs:
+      - models/base/xgboost.pkl
+      - models/base/xgboost.features.json
+    metrics:
+      - reports/metrics/xgboost.json:
+          cache: false
+
+  select_best_model:
+    cmd: python -m ml_dice_game.modeling.select_best_model
+    deps:
+      - models/base/random_forest.pkl
+      - models/base/xgboost.pkl
+      - reports/metrics/random_forest.json
+      - reports/metrics/xgboost.json
+      - ml_dice_game/modeling/common.py
+      - ml_dice_game/modeling/select_best_model.py
+      - ml_dice_game/plots.py
+    outs:
+      - models/selection.json
+      - reports/figures/base_models_metrics_comparison.png
+    metrics:
+      - reports/metrics/base_models.json:
+          cache: false
+
+  tune_best_model:
+    cmd: python -m ml_dice_game.modeling.tune_best_model
+    deps:
+      - data/processed/train.csv
+      - data/processed/test.csv
+      - models/selection.json
+      - models/base/random_forest.pkl
+      - models/base/xgboost.pkl
+      - ml_dice_game/modeling/common.py
+      - ml_dice_game/modeling/tune_best_model.py
+      - ml_dice_game/explain.py
+      - ml_dice_game/plots.py
+    params:
+      - random_state
+      - split.cv_n_splits
       - tune
-      - mlflow.experiment_name
-      - mlflow.registered_model_name
     outs:
       - models/model.pkl
+      - models/model.features.json
+      - reports/figures/base_vs_tuned_metrics_comparison.png
+      - reports/figures/shap_global_importance.png
     metrics:
-      - reports/metrics.json:
-          cache: false
-    plots:
-      - reports/figures/metrics_comparison.png:
+      - reports/metrics/base_vs_tuned.json:
           cache: false

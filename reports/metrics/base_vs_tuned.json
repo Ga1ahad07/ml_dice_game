@@ -1,0 +1,24 @@
+{
+  "selected_model": "XGBoost",
+  "selection_metric": "R2",
+  "base": {
+    "R2": 0.9157441854476929,
+    "MAE": 0.9456977844238281,
+    "RMSE": 1.2969030813830753
+  },
+  "tuned": {
+    "R2": 0.9502457976341248,
+    "MAE": 0.6925628781318665,
+    "RMSE": 0.9966036818982726
+  },
+  "best_params": {
+    "subsample": 0.8,
+    "reg_lambda": 5,
+    "reg_alpha": 0,
+    "n_estimators": 800,
+    "min_child_weight": 5,
+    "max_depth": 4,
+    "learning_rate": 0.2,
+    "colsample_bytree": 1.0
+  }
+}

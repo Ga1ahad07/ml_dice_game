@@ -85,7 +85,7 @@ class EvaluationReporter:
             fig.savefig(self.save_dir / filename, dpi=150)
         plt.show()
 
-    def plot_metrics_comparison(self, metrics_df: pd.DataFrame, filename="metrics_comparison.png"):
+    def plot_metrics_comparison(self, metrics_df: pd.DataFrame, filename="metrics_comparison.png") -> None:
         fig, axes = plt.subplots(1, len(metrics_df.columns), figsize=(14, 4))
         for ax, metric in zip(axes, metrics_df.columns):
             metrics_df[metric].plot(kind="bar", ax=ax, title=metric)
