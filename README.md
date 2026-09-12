@@ -264,11 +264,6 @@ ml_dice_game/
 └── requirements.txt             # Dependencias Python
 ```
 
-## Documentacion adicional
-
-- [Pipeline de modelado](docs/docs/pipeline-modeling.md)
-- [Herencia de `TrainModel`](docs/docs/train-model-inheritance.md)
-
 ## Estado y reproducibilidad
 
 Los modelos, metricas, figuras y datasets generados no deben editarse
