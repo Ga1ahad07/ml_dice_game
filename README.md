@@ -1,61 +1,283 @@
 # ml_dice_game
 
-<a target="_blank" href="https://cookiecutter-data-science.drivendata.org/">
-    <img src="https://img.shields.io/badge/CCDS-Project%20template-328F97?logo=cookiecutter" />
-</a>
+Modelo de regresion no lineal para estimar `PUNTAJE` a partir del estado del
+tablero, la ronda, el turno y la carta jugada en un juego de mesa.
 
-Modelo de regresión no lineal para estimar el valor de utilidad de una carta de un juego de mesa en proceso de desarrollo.
+El proyecto compara `RandomForestRegressor` y `XGBRegressor`, selecciona el
+mejor modelo por `R2` en test, ajusta sus hiperparametros y publica el modelo
+final para consumo local o mediante API.
 
-## Project Organization
+## Flujo del proyecto
 
-```
-├── LICENSE            <- Open-source license if one is chosen
-├── Makefile           <- Makefile with convenience commands like `make data` or `make train`
-├── README.md          <- The top-level README for developers using this project.
-├── data
-│   ├── external       <- Data from third party sources.
-│   ├── interim        <- Intermediate data that has been transformed.
-│   ├── processed      <- The final, canonical data sets for modeling.
-│   └── raw            <- The original, immutable data dump.
-│
-├── docs               <- A default mkdocs project; see www.mkdocs.org for details
-│
-├── models             <- Trained and serialized models, model predictions, or model summaries
-│
-├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
-│                         the creator's initials, and a short `-` delimited description, e.g.
-│                         `1.0-jqp-initial-data-exploration`.
-│
-├── pyproject.toml     <- Project configuration file with package metadata for 
-│                         ml_dice_game and configuration for tools like black
-│
-├── references         <- Data dictionaries, manuals, and all other explanatory materials.
-│
-├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
-│   └── figures        <- Generated graphics and figures to be used in reporting
-│
-├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
-│                         generated with `pip freeze > requirements.txt`
-│
-├── setup.cfg          <- Configuration file for flake8
-│
-└── ml_dice_game   <- Source code for use in this project.
-    │
-    ├── __init__.py             <- Makes ml_dice_game a Python module
-    │
-    ├── config.py               <- Store useful variables and configuration
-    │
-    ├── dataset.py              <- Scripts to download or generate data
-    │
-    ├── features.py             <- Code to create features for modeling
-    │
-    ├── modeling                
-    │   ├── __init__.py 
-    │   ├── predict.py          <- Code to run model inference with trained models          
-    │   └── train.py            <- Code to train models
-    │
-    └── plots.py                <- Code to create visualizations
+```text
+data/raw/dataset.csv
+        |
+        v
+validate_data -> data/interim/validation_report.json
+        |
+        v
+split_data -> data/processed/train.csv + test.csv
+        |
+        +--> train_random_forest -> models/base/random_forest.pkl
+        |                          reports/metrics/random_forest.json
+        |
+        +--> train_xgboost ------> models/base/xgboost.pkl
+                                   reports/metrics/xgboost.json
+        |
+        v
+select_best_model -> models/selection.json
+                     reports/metrics/base_models.json
+        |
+        v
+tune_best_model -> models/model.pkl
+                   reports/metrics/base_vs_tuned.json
+                   reports/figures/*.png
 ```
 
---------
+El pipeline se define en `dvc.yaml`. Los stages de Random Forest y XGBoost
+heredan el flujo comun de `TrainModel`, definido en
+`ml_dice_game/modeling/train_model.py`.
 
+## Requisitos
+
+- Python `3.11`, version declarada por el proyecto.
+- Git.
+- DVC `3.x`.
+- Acceso al remoto DVC configurado si se necesita descargar o publicar datos.
+
+Las dependencias Python se encuentran en `requirements.txt`. El remoto Google
+Drive usa `dvc-gdrive`; las versiones de `pyOpenSSL` y `cryptography` deben
+respetar las restricciones compatibles con PyDrive2.
+
+## Instalacion
+
+Desde la raiz del repositorio:
+
+```powershell
+py -3.11 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+En PowerShell, si la politica de ejecucion impide activar el entorno, puede
+usarse temporalmente:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
+.\.venv\Scripts\Activate.ps1
+```
+
+Tambien es posible instalar mediante Make:
+
+```text
+make requirements
+```
+
+## Datos y DVC
+
+El dataset original debe estar en `data/raw/dataset.csv` y esta versionado con
+DVC:
+
+```text
+dvc pull
+dvc push
+dvc status
+dvc dag
+```
+
+Las credenciales del remoto deben permanecer en `.dvc/config.local` o en el
+mecanismo seguro elegido para el entorno. No deben agregarse al repositorio.
+
+## Ejecutar el pipeline completo
+
+La forma recomendada de reproducir todos los stages es:
+
+```text
+dvc repro
+```
+
+Tambien puede usarse `make pipeline`. El pipeline ejecuta estas etapas:
+
+1. `validate_data`: valida faltantes, duplicados y reglas de las cartas.
+2. `split_data`: crea `train.csv` y `test.csv`, estratificando por `RONDA`.
+3. `train_random_forest`: entrena y evalua el baseline Random Forest.
+4. `train_xgboost`: entrena y evalua el baseline XGBoost.
+5. `select_best_model`: selecciona el modelo con mayor `R2` en test.
+6. `tune_best_model`: ajusta el ganador, genera SHAP y publica el modelo final.
+
+Para ejecutar cada stage manualmente:
+
+```text
+python -m ml_dice_game.dataset
+python -m ml_dice_game.features
+python -m ml_dice_game.modeling.train_random_forest
+python -m ml_dice_game.modeling.train_xgboost
+python -m ml_dice_game.modeling.select_best_model
+python -m ml_dice_game.modeling.tune_best_model
+```
+
+## Configuracion
+
+Los parametros del experimento se encuentran en `params.yaml`:
+
+- `random_state`: semilla de reproducibilidad.
+- `split`: tamano del test, columna de estratificacion y folds de CV.
+- `train.rf`: parametros base de Random Forest.
+- `train.xgb`: parametros base de XGBoost.
+- `tune`: numero de iteraciones, metrica y espacios de hiperparametros.
+- `mlflow`: nombre del experimento y del modelo registrado.
+
+No se deben colocar rutas absolutas ni secretos en `params.yaml`.
+
+## Arquitectura de entrenamiento
+
+`TrainModel` aplica un flujo comun mediante herencia:
+
+```text
+TrainModel.run()
+  cargar train/test
+  separar X e y
+  crear estimador especifico
+  ejecutar cross-validation
+  entrenar con todo train
+  evaluar en test
+  guardar modelo y metricas
+```
+
+Las clases hijas solo definen el estimador y la clave de parametros:
+
+- `RandomForestTrainer` usa `RandomForestRegressor` y `train.rf`.
+- `XGBoostTrainer` usa `XGBRegressor` y `train.xgb`.
+
+Los artefactos base se guardan en `models/base/`. La etapa de seleccion genera
+`models/selection.json`; la etapa de tuning publica siempre `models/model.pkl`,
+que es la ruta usada por el fallback local de la API.
+
+## Metricas y reportes
+
+Cada modelo genera un JSON con `R2`, `MAE`, `RMSE`, medias de validacion cruzada
+y los parametros efectivos del estimador. Los reportes principales son:
+
+```text
+reports/metrics/random_forest.json
+reports/metrics/xgboost.json
+reports/metrics/base_models.json
+reports/metrics/base_vs_tuned.json
+reports/figures/base_models_metrics_comparison.png
+reports/figures/base_vs_tuned_metrics_comparison.png
+reports/figures/shap_global_importance.png
+```
+
+## API de prediccion
+
+La API usa FastAPI y carga el modelo registrado en MLflow en `Production`. Si
+no puede acceder al registro, usa `models/model.pkl` como fallback local.
+
+Iniciar el servidor:
+
+```text
+uvicorn api.main:app --reload --port 8000
+```
+
+O mediante `make serve`. La documentacion interactiva queda disponible en
+`http://localhost:8000/docs`.
+
+Endpoints disponibles:
+
+- `GET /health`: estado de la API y origen del modelo.
+- `POST /predict`: prediccion individual.
+- `POST /predict/batch`: predicciones por lote.
+
+El cuerpo de `/predict` debe incluir todas las features listadas en
+`models/model.features.json`. Los esquemas se generan dinamicamente en
+`api/schemas.py`.
+
+## MLflow
+
+El tracking local se configura mediante `ExperimentTracker`:
+
+```text
+mlflow ui --backend-store-uri ./mlruns
+```
+
+O mediante `make mlflow-ui`. Para promover una version registrada:
+
+```text
+make promote VERSION=1
+```
+
+La promocion requiere que la version indicada exista en el Model Registry.
+
+## Notebook
+
+El notebook principal es `notebooks/entrenamiento_rf_xgboost.ipynb`. Contiene
+EDA, distribuciones, correlaciones, comparacion de modelos, tuning y SHAP. Para
+ejecuciones reproducibles del pipeline se recomienda usar DVC; el notebook se
+usa principalmente para exploracion, visualizacion y analisis.
+
+## Pruebas, formato y limpieza
+
+```text
+python -m pytest tests
+make test
+make lint
+make format
+make clean
+```
+
+## Estructura actual
+
+```text
+ml_dice_game/
+├── api/
+│   ├── main.py                  # Endpoints FastAPI
+│   ├── model_service.py         # MLflow y fallback local
+│   └── schemas.py               # Esquemas de entrada/salida
+├── data/
+│   ├── raw/                     # Dataset original versionado por DVC
+│   ├── interim/                 # Reportes intermedios
+│   └── processed/               # train.csv y test.csv
+├── docs/                        # Documentacion del proyecto
+├── ml_dice_game/
+│   ├── config.py                # Rutas y parametros compartidos
+│   ├── dataset.py               # Carga y validacion del dataset
+│   ├── features.py              # Split train/test
+│   ├── explain.py               # Explicabilidad SHAP
+│   ├── plots.py                 # Graficos EDA y evaluacion
+│   └── modeling/
+│       ├── common.py            # Funciones compartidas de ML
+│       ├── predict.py           # Predictor serializado
+│       ├── tracking.py          # Integracion MLflow
+│       ├── train_model.py       # Clase padre del entrenamiento
+│       ├── train_random_forest.py
+│       ├── train_xgboost.py
+│       ├── select_best_model.py
+│       └── tune_best_model.py
+├── models/                      # Modelos y metadatos generados
+├── notebooks/                   # Exploracion y visualizacion
+├── reports/                     # Metricas y figuras
+├── tests/                       # Pruebas automatizadas
+├── dvc.yaml                     # Pipeline reproducible
+├── params.yaml                  # Parametros del experimento
+├── Makefile                     # Comandos frecuentes
+└── requirements.txt             # Dependencias Python
+```
+
+## Documentacion adicional
+
+- [Pipeline de modelado](docs/docs/pipeline-modeling.md)
+- [Herencia de `TrainModel`](docs/docs/train-model-inheritance.md)
+
+## Estado y reproducibilidad
+
+Los modelos, metricas, figuras y datasets generados no deben editarse
+manualmente. Cambiar codigo o parametros y ejecutar `dvc repro` permite que DVC
+determine que etapas deben repetirse:
+
+```text
+python -m pytest tests
+dvc status
+git diff --check
+```
+No subir `.env`, `.dvc/config.local`, client secrets ni tokens al repositorio.
