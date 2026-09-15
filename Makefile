@@ -68,6 +68,36 @@ mlflow-ui:
 serve:
 	uvicorn api.main:app --reload --port 8000
 
+## Construir las imagenes Docker
+.PHONY: docker-build
+docker-build:
+	docker compose build
+
+## Levantar la API y MLflow con Docker Compose
+.PHONY: docker-up
+docker-up:
+	docker compose up -d
+
+## Detener los servicios Docker
+.PHONY: docker-down
+docker-down:
+	docker compose down
+
+## Mostrar el estado de los servicios Docker
+.PHONY: docker-ps
+docker-ps:
+	docker compose ps
+
+## Mostrar los logs de los servicios Docker
+.PHONY: docker-logs
+docker-logs:
+	docker compose logs -f
+
+## Reiniciar los servicios Docker
+.PHONY: docker-restart
+docker-restart:
+	docker compose restart
+
 ## Promover a Production el último modelo registrado (requiere version)
 .PHONY: promote
 promote:

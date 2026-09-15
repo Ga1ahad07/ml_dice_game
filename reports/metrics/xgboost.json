@@ -16,7 +16,7 @@
     "colsample_bytree": null,
     "device": null,
     "early_stopping_rounds": null,
-    "enable_categorical": true,
+    "enable_categorical": false,
     "eval_metric": null,
     "feature_types": null,
     "feature_weights": null,
