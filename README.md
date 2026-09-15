@@ -43,6 +43,7 @@ heredan el flujo comun de `TrainModel`, definido en
 - Python `3.11`, version declarada por el proyecto.
 - Git.
 - DVC `3.x`.
+- Docker Desktop con Docker Compose v2, para ejecutar la API y MLflow en contenedores.
 - Acceso al remoto DVC configurado si se necesita descargar o publicar datos.
 
 Las dependencias Python se encuentran en `requirements.txt`. El remoto Google
@@ -192,6 +193,58 @@ Endpoints disponibles:
 El cuerpo de `/predict` debe incluir todas las features listadas en
 `models/model.features.json`. Los esquemas se generan dinamicamente en
 `api/schemas.py`.
+
+## Ejecucion con Docker
+
+La configuracion de `docker-compose.yml` levanta dos servicios:
+
+- `api`: imagen local `ml-dice-game-api:local`, expuesta en
+        `http://localhost:8000`.
+- `mlflow`: servidor MLflow expuesto en `http://localhost:5000`, con un volumen
+        Docker nombrado para conservar los artefactos almacenados en `/mlruns`.
+
+Antes de construir la imagen, se recomienda ejecutar `dvc repro` para generar
+`models/model.pkl` y los metadatos de features. La imagen copia esos artefactos
+y la API los usa como fallback local si no encuentra un modelo en `Production`
+en el registro MLflow.
+
+Desde la raiz del repositorio, ejecutar:
+
+```powershell
+docker compose build
+docker compose up -d
+docker compose ps
+```
+
+Tambien pueden usarse los comandos equivalentes de Make:
+
+```text
+make docker-build
+make docker-up
+make docker-ps
+```
+
+Con los servicios activos, la API queda disponible en `http://localhost:8000`
+y su documentacion en `http://localhost:8000/docs`. La interfaz de MLflow queda
+disponible en `http://localhost:5000`.
+
+Para consultar los logs, reiniciar o detener los servicios:
+
+```powershell
+docker compose logs -f
+docker compose restart
+docker compose down
+```
+
+Los equivalentes de Make son `make docker-logs`, `make docker-restart` y
+`make docker-down`. `docker compose down` conserva el volumen `mlflow-data`;
+para eliminar tambien los datos persistidos de MLflow, usar
+`docker compose down -v`.
+
+La API recibe `MLFLOW_TRACKING_URI=http://mlflow:5000` dentro de la red de
+Compose. Por eso el servicio debe referenciarse como `mlflow` desde el
+contenedor, aunque desde el equipo anfitrion se acceda mediante
+`localhost:5000`.
 
 ## MLflow
 
