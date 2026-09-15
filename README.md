@@ -264,7 +264,7 @@ La promocion requiere que la version indicada exista en el Model Registry.
 
 ## Notebook
 
-El notebook principal es `notebooks/entrenamiento_rf_xgboost.ipynb`. Contiene
+El notebook principal es `notebooks/Notebook.ipynb`. Contiene
 EDA, distribuciones, correlaciones, comparacion de modelos, tuning y SHAP. Para
 ejecuciones reproducibles del pipeline se recomienda usar DVC; el notebook se
 usa principalmente para exploracion, visualizacion y analisis.
