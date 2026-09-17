@@ -1,8 +1,9 @@
-import pytest
-from sklearn.ensemble import RandomForestRegressor
-from xgboost import XGBRegressor
 import json
+
 import pandas as pd
+import pytest
+from sklearn.ensemble import RandomForestClassifier
+from xgboost import XGBClassifier
 
 from ml_dice_game.modeling.train_model import TrainModel
 from ml_dice_game.modeling.train_random_forest import RandomForestTrainer
@@ -15,7 +16,11 @@ def small_params():
         "random_state": 42,
         "train": {
             "rf": {"n_estimators": 3},
-            "xgb": {"n_estimators": 3},
+            "xgb": {
+                "n_estimators": 3,
+                "objective": "binary:logistic",
+                "eval_metric": "logloss",
+            },
         },
         "split": {"cv_n_splits": 2},
     }
@@ -30,7 +35,7 @@ def test_random_forest_child_builds_expected_estimator(small_params):
     trainer = RandomForestTrainer(params=small_params)
     estimator = trainer.build_estimator()
 
-    assert isinstance(estimator, RandomForestRegressor)
+    assert isinstance(estimator, RandomForestClassifier)
     assert estimator.n_estimators == 3
     assert trainer.model_name == "RandomForest"
 
@@ -39,7 +44,7 @@ def test_xgboost_child_builds_expected_estimator(small_params):
     trainer = XGBoostTrainer(params=small_params)
     estimator = trainer.build_estimator()
 
-    assert isinstance(estimator, XGBRegressor)
+    assert isinstance(estimator, XGBClassifier)
     assert estimator.n_estimators == 3
     assert trainer.model_name == "XGBoost"
 
@@ -53,14 +58,14 @@ def test_model_params_include_reproducibility_options(small_params):
 
 def test_run_writes_model_and_metrics(tmp_path, small_params):
     train = pd.DataFrame({
-        "RONDA": [1, 1, 2, 2, 3, 3],
-        "feature": [1, 2, 3, 4, 5, 6],
-        "PUNTAJE": [2, 3, 4, 5, 6, 7],
+        "RONDA": [1, 1, 2, 2, 3, 3, 4, 4],
+        "feature": [1, 2, 3, 4, 5, 6, 7, 8],
+        "VENTAJA": [0, 1, 0, 1, 0, 1, 0, 1],
     })
     test = pd.DataFrame({
-        "RONDA": [1, 2],
-        "feature": [7, 8],
-        "PUNTAJE": [8, 9],
+        "RONDA": [1, 2, 3, 4],
+        "feature": [9, 10, 11, 12],
+        "VENTAJA": [0, 1, 0, 1],
     })
     train_path = tmp_path / "train.csv"
     test_path = tmp_path / "test.csv"
@@ -82,5 +87,14 @@ def test_run_writes_model_and_metrics(tmp_path, small_params):
     assert model_path.with_suffix(".features.json").exists()
     assert metrics_path.exists()
     assert payload["model"] == "RandomForest"
-    assert set(("R2", "MAE", "RMSE")).issubset(payload)
+    assert payload["target"] == "VENTAJA"
+    assert set(("Accuracy", "Precision", "Recall",
+               "F1", "ROC_AUC")).issubset(payload)
+    assert set((
+        "cv_Accuracy_mean",
+        "cv_Precision_mean",
+        "cv_Recall_mean",
+        "cv_F1_mean",
+        "cv_ROC_AUC_mean",
+    )).issubset(payload)
     assert json.loads(metrics_path.read_text())["model"] == "RandomForest"

@@ -3,7 +3,8 @@ stages:
   validate_data:
     cmd: python -m ml_dice_game.dataset
     deps:
-      - data/raw/dataset.csv
+      - data/raw/dataset2.csv
+      - ml_dice_game/config.py
       - ml_dice_game/dataset.py
     params:
       - random_state
@@ -13,7 +14,8 @@ stages:
   split_data:
     cmd: python -m ml_dice_game.features
     deps:
-      - data/raw/dataset.csv
+      - data/raw/dataset2.csv
+      - ml_dice_game/config.py
       - ml_dice_game/features.py
       - data/interim/validation_report.json
     params:
@@ -31,6 +33,7 @@ stages:
       - data/processed/train.csv
       - data/processed/test.csv
       - ml_dice_game/modeling/common.py
+      - ml_dice_game/config.py
       - ml_dice_game/modeling/train_model.py
       - ml_dice_game/modeling/train_random_forest.py
     params:
@@ -50,6 +53,7 @@ stages:
       - data/processed/train.csv
       - data/processed/test.csv
       - ml_dice_game/modeling/common.py
+      - ml_dice_game/config.py
       - ml_dice_game/modeling/train_model.py
       - ml_dice_game/modeling/train_xgboost.py
     params:
@@ -71,6 +75,7 @@ stages:
       - reports/metrics/random_forest.json
       - reports/metrics/xgboost.json
       - ml_dice_game/modeling/common.py
+      - ml_dice_game/config.py
       - ml_dice_game/modeling/select_best_model.py
       - ml_dice_game/plots.py
     outs:
@@ -89,6 +94,7 @@ stages:
       - models/base/random_forest.pkl
       - models/base/xgboost.pkl
       - ml_dice_game/modeling/common.py
+      - ml_dice_game/config.py
       - ml_dice_game/modeling/tune_best_model.py
       - ml_dice_game/explain.py
       - ml_dice_game/plots.py

@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import typer
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestClassifier
 
 from ml_dice_game.config import MODELS_DIR, PROCESSED_DATA_DIR, REPORTS_DIR
 from ml_dice_game.modeling.train_model import TrainModel
@@ -16,8 +16,8 @@ class RandomForestTrainer(TrainModel):
     def train_params_key(self) -> str:
         return "rf"
 
-    def build_estimator(self) -> RandomForestRegressor:
-        return RandomForestRegressor(**self.model_params())
+    def build_estimator(self) -> RandomForestClassifier:
+        return RandomForestClassifier(**self.model_params())
 
 
 app = typer.Typer()

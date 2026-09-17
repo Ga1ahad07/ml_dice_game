@@ -10,7 +10,7 @@ final para consumo local o mediante API.
 ## Flujo del proyecto
 
 ```text
-data/raw/dataset.csv
+data/raw/dataset2.csv
         |
         v
 validate_data -> data/interim/validation_report.json
@@ -77,7 +77,7 @@ make requirements
 
 ## Datos y DVC
 
-El dataset original debe estar en `data/raw/dataset.csv` y esta versionado con
+El dataset original debe estar en `data/raw/dataset2.csv` y esta versionado con
 DVC:
 
 ```text
@@ -264,7 +264,7 @@ La promocion requiere que la version indicada exista en el Model Registry.
 
 ## Notebook
 
-El notebook principal es `notebooks/Notebook.ipynb`. Contiene
+El notebook principal es `notebooks/Notebook_VENTAJA.ipynb`. Contiene
 EDA, distribuciones, correlaciones, comparacion de modelos, tuning y SHAP. Para
 ejecuciones reproducibles del pipeline se recomienda usar DVC; el notebook se
 usa principalmente para exploracion, visualizacion y analisis.

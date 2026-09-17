@@ -26,7 +26,8 @@ FIGURES_DIR = REPORTS_DIR / "figures"
 RANDOM_STATE = 42
 
 CARD_COLUMNS = ["C1A", "C1B", "C1C", "C2A", "C2B", "C2C", "C3A", "C3B", "C3C"]
-TARGET_COLUMN = "PUNTAJE"
+BOARD_COLUMNS = ["T1A", "T1B", "T1C", "T2A", "T2B", "T2C", "T3A", "T3B", "T3C"]
+TARGET_COLUMN = "VENTAJA"
 STRATIFY_COLUMN = "RONDA"
 
 CARD_SUM_EXPECTED = 8
@@ -34,6 +35,14 @@ CARD_NONZERO_EXPECTED = 4
 
 CV_N_SPLITS = 5
 TEST_SIZE = 0.2
+
+CLASSIFICATION_SCORING = {
+    "accuracy": "accuracy",
+    "precision": "precision",
+    "recall": "recall",
+    "f1": "f1",
+    "roc_auc": "roc_auc",
+}
 
 XGB_PARAM_DISTRIBUTIONS = {
     "n_estimators": [200, 300, 500, 800],

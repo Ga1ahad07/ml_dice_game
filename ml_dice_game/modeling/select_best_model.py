@@ -22,18 +22,19 @@ def main(
     rf_metrics = json.loads(rf_metrics_path.read_text(encoding="utf-8"))
     xgb_metrics = json.loads(xgb_metrics_path.read_text(encoding="utf-8"))
     metrics = {
-        "RandomForest": {key: rf_metrics[key] for key in ("R2", "MAE", "RMSE")},
-        "XGBoost": {key: xgb_metrics[key] for key in ("R2", "MAE", "RMSE")},
+        "RandomForest": {key: rf_metrics[key] for key in ("Accuracy", "Precision", "Recall", "F1", "ROC_AUC")},
+        "XGBoost": {key: xgb_metrics[key] for key in ("Accuracy", "Precision", "Recall", "F1", "ROC_AUC")},
     }
     metrics_df = pd.DataFrame(metrics).T
-    selected_model = metrics_df["R2"].idxmax()
+    selected_model = metrics_df["ROC_AUC"].idxmax()
     model_filename = "random_forest.pkl" if selected_model == "RandomForest" else "xgboost.pkl"
 
     save_json(
         {
+            "target": "VENTAJA",
             "selected_model": selected_model,
             "model_path": str(MODELS_DIR / "base" / model_filename),
-            "selection_metric": "R2",
+            "selection_metric": "ROC_AUC",
             "metrics": metrics,
         },
         selection_path,

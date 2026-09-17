@@ -4,13 +4,14 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any
 
-from sklearn.base import RegressorMixin
+from sklearn.base import ClassifierMixin
 from sklearn.model_selection import cross_validate
 
 from ml_dice_game.config import (
     MODELS_DIR,
     PROCESSED_DATA_DIR,
     REPORTS_DIR,
+    TARGET_COLUMN,
     load_params,
 )
 from ml_dice_game.modeling.common import (
@@ -52,7 +53,7 @@ class TrainModel(ABC):
         """Clave del estimador dentro de params['train']."""
 
     @abstractmethod
-    def build_estimator(self) -> RegressorMixin:
+    def build_estimator(self) -> ClassifierMixin:
         """Construye el estimador especifico de la clase hija."""
 
     def model_params(self) -> dict[str, Any]:
@@ -104,16 +105,19 @@ class TrainModel(ABC):
 
     def build_metrics_payload(
         self,
-        estimator: RegressorMixin,
+        estimator: ClassifierMixin,
         cv_result: dict[str, Any],
         test_metrics: dict[str, float],
     ) -> dict[str, Any]:
         """Construye el formato comun consumido por select_best_model."""
         return {
+            "target": TARGET_COLUMN,
             "model": self.model_name,
             **test_metrics,
-            "cv_R2_mean": float(cv_result["test_r2"].mean()),
-            "cv_MAE_mean": float(-cv_result["test_mae"].mean()),
-            "cv_RMSE_mean": float(-cv_result["test_rmse"].mean()),
+            "cv_Accuracy_mean": float(cv_result["test_accuracy"].mean()),
+            "cv_Precision_mean": float(cv_result["test_precision"].mean()),
+            "cv_Recall_mean": float(cv_result["test_recall"].mean()),
+            "cv_F1_mean": float(cv_result["test_f1"].mean()),
+            "cv_ROC_AUC_mean": float(cv_result["test_roc_auc"].mean()),
             "params": estimator.get_params(),
         }

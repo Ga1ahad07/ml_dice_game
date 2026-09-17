@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import typer
-from xgboost import XGBRegressor
+from xgboost import XGBClassifier
 
 from ml_dice_game.config import MODELS_DIR, PROCESSED_DATA_DIR, REPORTS_DIR
 from ml_dice_game.modeling.train_model import TrainModel
@@ -16,8 +16,8 @@ class XGBoostTrainer(TrainModel):
     def train_params_key(self) -> str:
         return "xgb"
 
-    def build_estimator(self) -> XGBRegressor:
-        return XGBRegressor(**self.model_params())
+    def build_estimator(self) -> XGBClassifier:
+        return XGBClassifier(**self.model_params())
 
 
 app = typer.Typer()

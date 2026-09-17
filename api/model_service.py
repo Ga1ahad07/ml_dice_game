@@ -40,9 +40,13 @@ class ModelService:
     def source(self) -> str:
         return self._source or "not_loaded"
 
-    def predict(self, df: pd.DataFrame) -> list[float]:
-        preds = self.model.predict(df)
-        return [float(p) for p in preds]
+    def predict(self, df: pd.DataFrame) -> dict[str, list[float | int]]:
+        classes = self.model.predict(df)
+        probabilities = self.model.predict_proba(df)[:, 1]
+        return {
+            "predictions": [int(value) for value in classes],
+            "probabilities": [float(value) for value in probabilities],
+        }
 
 
 model_service = ModelService()  # singleton a nivel de módulo

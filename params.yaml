@@ -3,7 +3,7 @@ random_state: 42
 
 split:
   test_size: 0.2
-  stratify_col: RONDA
+  stratify_col: VENTAJA
   cv_n_splits: 5
 
 train:
@@ -11,10 +11,12 @@ train:
     n_estimators: 300
   xgb:
     n_estimators: 300
+    objective: binary:logistic
+    eval_metric: logloss
 
 tune:
   n_iter: 50
-  scoring: r2
+  scoring: roc_auc
   xgb_param_distributions:
     n_estimators: [200, 300, 500, 800]
     max_depth: [3, 4, 5, 6, 8]
@@ -33,4 +35,4 @@ tune:
 
 mlflow:
   experiment_name: ml_dice_game
-  registered_model_name: ml_dice_game_regressor
+  registered_model_name: ml_dice_game_ventaja_classifier

@@ -5,17 +5,20 @@ from pathlib import Path
 
 import joblib
 import pandas as pd
-from sklearn.model_selection import KFold
-from sklearn.base import RegressorMixin
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.base import ClassifierMixin
+from sklearn.model_selection import StratifiedKFold
+from sklearn.metrics import (
+    accuracy_score, f1_score, precision_score, recall_score, roc_auc_score)
 
 from ml_dice_game.config import RANDOM_STATE, TARGET_COLUMN
 
 
 SCORING = {
-    "r2": "r2",
-    "mae": "neg_mean_absolute_error",
-    "rmse": "neg_root_mean_squared_error",
+    "accuracy": "accuracy",
+    "precision": "precision",
+    "recall": "recall",
+    "f1": "f1",
+    "roc_auc": "roc_auc",
 }
 
 
@@ -27,18 +30,27 @@ def split_xy(frame: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
     return frame.drop(columns=[TARGET_COLUMN]), frame[TARGET_COLUMN]
 
 
-def make_cv(cv_n_splits: int, random_state: int = RANDOM_STATE) -> KFold:
-    return KFold(n_splits=cv_n_splits, shuffle=True, random_state=random_state)
+def make_cv(cv_n_splits: int, random_state: int = RANDOM_STATE) -> StratifiedKFold:
+    return StratifiedKFold(
+        n_splits=cv_n_splits,
+        shuffle=True,
+        random_state=random_state,
+    )
 
 
 def evaluate_model(
-    model: RegressorMixin, X_test: pd.DataFrame, y_test: pd.Series
+    model: ClassifierMixin,
+    X_test: pd.DataFrame,
+    y_test: pd.Series,
 ) -> dict[str, float]:
     predictions = model.predict(X_test)
+    probabilities = model.predict_proba(X_test)[:, 1]
     return {
-        "R2": float(r2_score(y_test, predictions)),
-        "MAE": float(mean_absolute_error(y_test, predictions)),
-        "RMSE": float(mean_squared_error(y_test, predictions) ** 0.5),
+        "Accuracy": float(accuracy_score(y_test, predictions)),
+        "Precision": float(precision_score(y_test, predictions, zero_division=0)),
+        "Recall": float(recall_score(y_test, predictions, zero_division=0)),
+        "F1": float(f1_score(y_test, predictions, zero_division=0)),
+        "ROC_AUC": float(roc_auc_score(y_test, probabilities)),
     }
 
 
