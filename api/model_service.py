@@ -1,3 +1,5 @@
+import os
+
 import mlflow
 import pandas as pd
 from loguru import logger
@@ -13,11 +15,15 @@ class ModelService:
     def __init__(self):
         params = load_params()
         self.registered_model_name = params["mlflow"]["registered_model_name"]
+        self.tracking_uri = os.getenv(
+            "MLFLOW_TRACKING_URI", "sqlite:///mlflow.db")
+        mlflow.set_tracking_uri(self.tracking_uri)
         self._model = None
         self._source = None
 
     def load(self):
         try:
+            mlflow.set_tracking_uri(self.tracking_uri)
             uri = f"models:/{self.registered_model_name}/Production"
             self._model = mlflow.pyfunc.load_model(uri)
             self._source = "mlflow_registry"

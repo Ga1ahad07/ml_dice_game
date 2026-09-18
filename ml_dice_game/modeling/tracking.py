@@ -19,13 +19,16 @@ class ExperimentTracker:
 
     @staticmethod
     def log_cv_results(cv_results: dict):
-        for model_name, res in cv_results.items():
-            mlflow.log_metric(f"{model_name}_cv_r2_mean",
-                              res["test_r2"].mean())
-            mlflow.log_metric(
-                f"{model_name}_cv_mae_mean", -res["test_mae"].mean())
-            mlflow.log_metric(
-                f"{model_name}_cv_rmse_mean", -res["test_rmse"].mean())
+        for metric_name, values in cv_results.items():
+            if metric_name.startswith("test_"):
+                mlflow.log_metric(
+                    f"cv_{metric_name.removeprefix('test_')}_mean",
+                    float(values.mean()),
+                )
+
+    @staticmethod
+    def log_params(params: dict):
+        mlflow.log_params({key: str(value) for key, value in params.items()})
 
     @staticmethod
     def log_test_metrics(metrics: dict, prefix: str = ""):

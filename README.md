@@ -251,7 +251,7 @@ contenedor, aunque desde el equipo anfitrion se acceda mediante
 El tracking local se configura mediante `ExperimentTracker`:
 
 ```text
-mlflow ui --backend-store-uri ./mlruns
+mlflow ui --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./mlruns
 ```
 
 O mediante `make mlflow-ui`. Para promover una version registrada:

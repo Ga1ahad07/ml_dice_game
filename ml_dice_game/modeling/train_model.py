@@ -23,6 +23,7 @@ from ml_dice_game.modeling.common import (
     save_model,
     split_xy,
 )
+from ml_dice_game.modeling.tracking import ExperimentTracker
 
 
 class TrainModel(ABC):
@@ -94,6 +95,20 @@ class TrainModel(ABC):
             cv_result,
             test_metrics,
         )
+
+        mlflow_params = self.params.get("mlflow", {})
+        experiment_name = mlflow_params.get("experiment_name", "ml_dice_game")
+        registered_model_name = mlflow_params.get("registered_model_name")
+        tracker = ExperimentTracker(experiment_name)
+        with tracker.run(self.model_name):
+            tracker.log_params(self.model_params())
+            tracker.log_cv_results(cv_result)
+            tracker.log_test_metrics(test_metrics)
+            tracker.log_model(
+                estimator,
+                self.model_name,
+                registered_model_name=registered_model_name,
+            )
 
         save_model(
             estimator,

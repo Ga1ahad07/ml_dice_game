@@ -24,10 +24,9 @@ def health():
 
 
 @app.post("/predict", response_model=PredictResponse)
-def predict(request: dict[str, float]):
+def predict(request: PredictRequest):
     try:
-        validated_request = PredictRequest.model_validate(request)
-        df = pd.DataFrame([validated_request.model_dump()])
+        df = pd.DataFrame([request.model_dump()])
         result = model_service.predict(df)
         return PredictResponse(
             prediction=int(result["predictions"][0]),

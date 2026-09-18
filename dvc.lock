@@ -184,8 +184,8 @@ stages:
       size: 2162
     - path: ml_dice_game/modeling/train_model.py
       hash: md5
-      md5: 8c1a98db9318d01c8d4611a9c71e9371
-      size: 3846
+      md5: 2edae3ee286af7b21e01868cbf8c88ab
+      size: 4542
     - path: ml_dice_game/modeling/train_random_forest.py
       hash: md5
       md5: 0dc6a0f4c796c5fc734b53fe8c4cf987
@@ -230,8 +230,8 @@ stages:
       size: 2162
     - path: ml_dice_game/modeling/train_model.py
       hash: md5
-      md5: 8c1a98db9318d01c8d4611a9c71e9371
-      size: 3846
+      md5: 2edae3ee286af7b21e01868cbf8c88ab
+      size: 4542
     - path: ml_dice_game/modeling/train_xgboost.py
       hash: md5
       md5: 365fef657cbc76335e43e3ff36c3a30a
