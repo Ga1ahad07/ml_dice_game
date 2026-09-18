@@ -155,6 +155,25 @@ class EvaluationReporter(_FigureReporter):
             ax.tick_params(axis="x", rotation=30)
         self._finish(fig, filename)
 
+    def plot_metric_comparison(
+        self,
+        metrics_df: pd.DataFrame,
+        metric: str,
+        filename: str,
+    ) -> None:
+        if metric not in metrics_df.columns:
+            raise ValueError(f"metrics_df no contiene la metrica {metric}")
+
+        fig, ax = plt.subplots(figsize=(5, 4))
+        metrics_df[metric].plot(kind="bar", ax=ax, color=[
+                                "steelblue", "darkorange"])
+        ax.set_title(f"Comparacion base vs. tuneado: {metric}")
+        ax.set_ylim(0, 1)
+        ax.set_xlabel("")
+        ax.set_ylabel(metric)
+        ax.tick_params(axis="x", rotation=0)
+        self._finish(fig, filename)
+
     def plot_confusion_matrix(self, model, X_test, y_test, model_name: str):
         predictions = model.predict(X_test)
         matrix = confusion_matrix(y_test, predictions)
@@ -168,7 +187,13 @@ class EvaluationReporter(_FigureReporter):
         self._finish(fig, f"confusion_matrix_{model_name}.png")
         return matrix
 
-    def plot_roc_curves(self, fitted_models: dict, X_test, y_test):
+    def plot_roc_curves(
+        self,
+        fitted_models: dict,
+        X_test,
+        y_test,
+        filename: str = "roc_curves.png",
+    ):
         fig, ax = plt.subplots(figsize=(6, 6))
         for name, model in fitted_models.items():
             probabilities = model.predict_proba(X_test)[:, 1]
@@ -187,7 +212,7 @@ class EvaluationReporter(_FigureReporter):
         ax.set_ylabel("Tasa de verdaderos positivos")
         ax.set_title("Curva ROC - comparacion de modelos")
         ax.legend()
-        self._finish(fig, "roc_curves.png")
+        self._finish(fig, filename)
 
     def plot_classification_report(self, model, X_test, y_test, model_name: str):
         from sklearn.metrics import classification_report

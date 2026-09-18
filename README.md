@@ -1,11 +1,11 @@
 # ml_dice_game
 
-Modelo de regresion no lineal para estimar `PUNTAJE` a partir del estado del
-tablero, la ronda, el turno y la carta jugada en un juego de mesa.
+Modelo de clasificacion para estimar `VENTAJA` a partir del estado del tablero,
+la ronda, el turno y las cartas jugadas en un juego de mesa.
 
-El proyecto compara `RandomForestRegressor` y `XGBRegressor`, selecciona el
-mejor modelo por `R2` en test, ajusta sus hiperparametros y publica el modelo
-final para consumo local o mediante API.
+El proyecto compara `RandomForestClassifier` y `XGBClassifier`, selecciona el
+mejor modelo por `ROC_AUC` en test, ajusta sus hiperparametros y registra los
+runs y modelos en MLflow para consumo local o mediante API.
 
 ## Flujo del proyecto
 
@@ -61,20 +61,6 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-En PowerShell, si la politica de ejecucion impide activar el entorno, puede
-usarse temporalmente:
-
-```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
-.\.venv\Scripts\Activate.ps1
-```
-
-Tambien es posible instalar mediante Make:
-
-```text
-make requirements
-```
-
 ## Datos y DVC
 
 El dataset original debe estar en `data/raw/dataset2.csv` y esta versionado con
@@ -98,14 +84,18 @@ La forma recomendada de reproducir todos los stages es:
 dvc repro
 ```
 
-Tambien puede usarse `make pipeline`. El pipeline ejecuta estas etapas:
+El pipeline ejecuta estas etapas:
 
 1. `validate_data`: valida faltantes, duplicados y reglas de las cartas.
-2. `split_data`: crea `train.csv` y `test.csv`, estratificando por `RONDA`.
+2. `split_data`: crea `train.csv` y `test.csv`, estratificando por `VENTAJA` y
+        conservando un diagnostico de distribucion por `RONDA`.
 3. `train_random_forest`: entrena y evalua el baseline Random Forest.
 4. `train_xgboost`: entrena y evalua el baseline XGBoost.
-5. `select_best_model`: selecciona el modelo con mayor `R2` en test.
+5. `select_best_model`: selecciona el modelo con mayor `ROC_AUC` en test.
 6. `tune_best_model`: ajusta el ganador, genera SHAP y publica el modelo final.
+
+Los stages `train_random_forest` y `train_xgboost` tambien crean un run en
+MLflow con parametros, metricas, artefactos del modelo y una version registrada.
 
 Para ejecutar cada stage manualmente:
 
@@ -148,8 +138,8 @@ TrainModel.run()
 
 Las clases hijas solo definen el estimador y la clave de parametros:
 
-- `RandomForestTrainer` usa `RandomForestRegressor` y `train.rf`.
-- `XGBoostTrainer` usa `XGBRegressor` y `train.xgb`.
+- `RandomForestTrainer` usa `RandomForestClassifier` y `train.rf`.
+- `XGBoostTrainer` usa `XGBClassifier` y `train.xgb`.
 
 Los artefactos base se guardan en `models/base/`. La etapa de seleccion genera
 `models/selection.json`; la etapa de tuning publica siempre `models/model.pkl`,
@@ -157,8 +147,9 @@ que es la ruta usada por el fallback local de la API.
 
 ## Metricas y reportes
 
-Cada modelo genera un JSON con `R2`, `MAE`, `RMSE`, medias de validacion cruzada
-y los parametros efectivos del estimador. Los reportes principales son:
+Cada modelo genera un JSON con `Accuracy`, `Precision`, `Recall`, `F1`, `ROC_AUC`,
+medias de validacion cruzada y los parametros efectivos del estimador. Los
+reportes principales son:
 
 ```text
 reports/metrics/random_forest.json
@@ -173,7 +164,9 @@ reports/figures/shap_global_importance.png
 ## API de prediccion
 
 La API usa FastAPI y carga el modelo registrado en MLflow en `Production`. Si
-no puede acceder al registro, usa `models/model.pkl` como fallback local.
+no puede acceder al registro o no hay una version en `Production`, usa
+`models/model.pkl` como fallback local. El URI se obtiene de la variable
+`MLFLOW_TRACKING_URI`; por defecto es `sqlite:///mlflow.db`.
 
 Iniciar el servidor:
 
@@ -181,8 +174,7 @@ Iniciar el servidor:
 uvicorn api.main:app --reload --port 8000
 ```
 
-O mediante `make serve`. La documentacion interactiva queda disponible en
-`http://localhost:8000/docs`.
+La documentacion interactiva queda disponible en `http://localhost:8000/docs`.
 
 Endpoints disponibles:
 
@@ -191,8 +183,9 @@ Endpoints disponibles:
 - `POST /predict/batch`: predicciones por lote.
 
 El cuerpo de `/predict` debe incluir todas las features listadas en
-`models/model.features.json`. Los esquemas se generan dinamicamente en
-`api/schemas.py`.
+`models/model.features.json`. El cuerpo de `/predict/batch` tiene la forma
+`{"rows": [{...}, {...}]}`. Los esquemas Pydantic se generan dinamicamente en
+`api/schemas.py` y Swagger muestra ejemplos completos en `/docs`.
 
 ## Ejecucion con Docker
 
@@ -200,28 +193,20 @@ La configuracion de `docker-compose.yml` levanta dos servicios:
 
 - `api`: imagen local `ml-dice-game-api:local`, expuesta en
         `http://localhost:8000`.
-- `mlflow`: servidor MLflow expuesto en `http://localhost:5000`, con un volumen
-        Docker nombrado para conservar los artefactos almacenados en `/mlruns`.
+- `mlflow`: servidor MLflow expuesto en `http://localhost:5000`, con el backend
+        SQLite y los artefactos persistidos en el volumen `mlflow-data`.
 
 Antes de construir la imagen, se recomienda ejecutar `dvc repro` para generar
 `models/model.pkl` y los metadatos de features. La imagen copia esos artefactos
 y la API los usa como fallback local si no encuentra un modelo en `Production`
 en el registro MLflow.
 
-Desde la raiz del repositorio, ejecutar:
+Desde la raiz del repositorio, con Docker Desktop iniciado, ejecutar:
 
 ```powershell
 docker compose build
 docker compose up -d
 docker compose ps
-```
-
-Tambien pueden usarse los comandos equivalentes de Make:
-
-```text
-make docker-build
-make docker-up
-make docker-ps
 ```
 
 Con los servicios activos, la API queda disponible en `http://localhost:8000`
@@ -236,15 +221,18 @@ docker compose restart
 docker compose down
 ```
 
-Los equivalentes de Make son `make docker-logs`, `make docker-restart` y
-`make docker-down`. `docker compose down` conserva el volumen `mlflow-data`;
-para eliminar tambien los datos persistidos de MLflow, usar
+`docker compose down` conserva el volumen `mlflow-data`; para eliminar tambien
+los datos persistidos de MLflow, usar
 `docker compose down -v`.
 
 La API recibe `MLFLOW_TRACKING_URI=http://mlflow:5000` dentro de la red de
-Compose. Por eso el servicio debe referenciarse como `mlflow` desde el
-contenedor, aunque desde el equipo anfitrion se acceda mediante
-`localhost:5000`.
+Compose y espera el healthcheck del servicio MLflow antes de iniciar. Por eso
+el servicio debe referenciarse como `mlflow` desde el contenedor, aunque desde
+el equipo anfitrion se acceda mediante `localhost:5000`.
+
+El tracking local del host (`sqlite:///mlflow.db`) y el tracking de Docker son
+instalaciones separadas. No ejecutes ambos servidores escribiendo sobre la
+misma base SQLite al mismo tiempo.
 
 ## MLflow
 
@@ -254,10 +242,11 @@ El tracking local se configura mediante `ExperimentTracker`:
 mlflow ui --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./mlruns
 ```
 
-O mediante `make mlflow-ui`. Para promover una version registrada:
+Para promover una version registrada, ejecuta el comando siguiente sustituyendo
+`1` por la version que corresponda:
 
-```text
-make promote VERSION=1
+```powershell
+python -c "from ml_dice_game.modeling.tracking import ExperimentTracker; from ml_dice_game.config import load_params; p = load_params()['mlflow']; ExperimentTracker(p['experiment_name']).promote_to_production(p['registered_model_name'], 1)"
 ```
 
 La promocion requiere que la version indicada exista en el Model Registry.
@@ -273,10 +262,8 @@ usa principalmente para exploracion, visualizacion y analisis.
 
 ```text
 python -m pytest tests
-make test
-make lint
-make format
-make clean
+ruff format --check
+ruff check
 ```
 
 ## Estructura actual
@@ -313,7 +300,6 @@ ml_dice_game/
 ├── tests/                       # Pruebas automatizadas
 ├── dvc.yaml                     # Pipeline reproducible
 ├── params.yaml                  # Parametros del experimento
-├── Makefile                     # Comandos frecuentes
 └── requirements.txt             # Dependencias Python
 ```
 

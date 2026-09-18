@@ -44,6 +44,26 @@ class ShapExplainer:
         plt.savefig(path, dpi=150, bbox_inches="tight")
         plt.close()
 
+    def save_group_importance(self, group_map: dict[str, str], path: Path) -> None:
+        """Guarda la importancia SHAP agregada por grupo de variables."""
+        missing = set(self.X_test.columns) - set(group_map)
+        if missing:
+            raise ValueError(f"No hay grupo SHAP para: {sorted(missing)}")
+
+        importance = pd.Series(
+            abs(self.explanation.values).mean(axis=0),
+            index=self.X_test.columns,
+        )
+        grouped = importance.groupby(importance.index.map(group_map)).sum()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        ax = grouped.sort_values().plot(kind="barh", figsize=(7, 4), color="teal")
+        ax.set_title("Importancia SHAP por grupo de variable")
+        ax.set_xlabel("Media de |valor SHAP|")
+        ax.set_ylabel("Grupo")
+        plt.tight_layout()
+        plt.savefig(path, dpi=150, bbox_inches="tight")
+        plt.close()
+
     def save_dependence_plot(self, feature: str, path: Path) -> None:
         """Guarda la dependencia SHAP de una variable sobre VENTAJA=1."""
         if feature not in self.X_test.columns:

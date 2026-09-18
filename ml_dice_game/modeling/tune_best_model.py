@@ -25,6 +25,7 @@ from ml_dice_game.modeling.common import (
     split_xy,
 )
 from ml_dice_game.plots import EvaluationReporter
+from ml_dice_game.modeling.tracking import ExperimentTracker
 
 
 app = typer.Typer()
@@ -106,13 +107,67 @@ def main(
     comparison = pd.DataFrame(
         {"base": base_metrics, "tuned": tuned_metrics}
     ).T
-    EvaluationReporter(save=True).plot_metrics_comparison(
-        comparison,
-        filename="base_vs_tuned_metrics_comparison.png",
+    reporter = EvaluationReporter(save=True)
+    for metric in ("Accuracy", "Precision", "Recall", "F1", "ROC_AUC"):
+        reporter.plot_metric_comparison(
+            comparison,
+            metric,
+            f"base_vs_tuned_{metric.lower()}_comparison.png",
+        )
+    reporter.plot_confusion_matrix(
+        tuned_model,
+        X_test,
+        y_test,
+        "Tuned",
     )
-    ShapExplainer(tuned_model, X_test).save_global_importance(
-        FIGURES_DIR / "shap_global_importance.png"
+    reporter.plot_roc_curves(
+        {"Base": base_model, "Tuned": tuned_model},
+        X_test,
+        y_test,
+        filename="base_vs_tuned_roc_curve.png",
     )
+
+    group_map = {
+        **{column: "Carta" for column in X_test.columns if column.startswith("C")},
+        **{column: "Tablero" for column in X_test.columns if column.startswith("T")},
+        "RONDA": "Ronda",
+        "TURNO": "Turno",
+    }
+    shap_explainer = ShapExplainer(tuned_model, X_test)
+    shap_paths = {
+        "global": FIGURES_DIR / "shap_global_importance.png",
+        "group": FIGURES_DIR / "shap_group_importance.png",
+        "beeswarm": FIGURES_DIR / "shap_summary_beeswarm.png",
+    }
+    shap_explainer.save_global_importance(shap_paths["global"])
+    shap_explainer.save_group_importance(group_map, shap_paths["group"])
+    shap_explainer.save_global_beeswarm(shap_paths["beeswarm"])
+
+    mlflow_params = params.get("mlflow", {})
+    tracker = ExperimentTracker(
+        mlflow_params.get("experiment_name", "ml_dice_game")
+    )
+    with tracker.run("Tuned"):
+        tracker.log_params(search.best_params_)
+        tracker.log_test_metrics(
+            {f"base_{key}": value for key, value in base_metrics.items()})
+        tracker.log_test_metrics(
+            {f"tuned_{key}": value for key, value in tuned_metrics.items()})
+        tracker.log_model(
+            tuned_model,
+            "Tuned",
+            registered_model_name=mlflow_params.get("registered_model_name"),
+        )
+        for path in [
+            *(
+                FIGURES_DIR / f"base_vs_tuned_{metric.lower()}_comparison.png"
+                for metric in ("Accuracy", "Precision", "Recall", "F1", "ROC_AUC")
+            ),
+            FIGURES_DIR / "confusion_matrix_Tuned.png",
+            FIGURES_DIR / "base_vs_tuned_roc_curve.png",
+            *shap_paths.values(),
+        ]:
+            tracker.log_artifact(path, artifact_path="figures")
 
 
 if __name__ == "__main__":

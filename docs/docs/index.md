@@ -2,7 +2,7 @@
 
 ## Description
 
-Modelo de regresión no lineal para estimar el valor de utilidad de una carta de un juego de mesa en proceso de desarrollo.
+Modelo de clasificación binaria para estimar si jugar una carta (dado un estado específico del tablero) dejará al jugador en una posición ventajosa o no. Dentro de un juego de mesa en proceso de desarrollo.
 
 ## Commands
 

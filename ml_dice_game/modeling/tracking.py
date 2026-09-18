@@ -36,6 +36,10 @@ class ExperimentTracker:
             mlflow.log_metric(f"{prefix}{k}", v)
 
     @staticmethod
+    def log_artifact(path, artifact_path: str | None = None):
+        mlflow.log_artifact(str(path), artifact_path=artifact_path)
+
+    @staticmethod
     def log_model(model, model_name: str, registered_model_name: str | None = None):
         # XGBoost y RandomForest exponen distinta API de logging nativa de MLflow
         flavor = mlflow.xgboost if model.__class__.__module__.startswith(

@@ -11,6 +11,7 @@ from ml_dice_game.config import (
     MODELS_DIR,
     PROCESSED_DATA_DIR,
     REPORTS_DIR,
+    FIGURES_DIR,
     TARGET_COLUMN,
     load_params,
 )
@@ -23,6 +24,7 @@ from ml_dice_game.modeling.common import (
     save_model,
     split_xy,
 )
+from ml_dice_game.plots import EvaluationReporter
 from ml_dice_game.modeling.tracking import ExperimentTracker
 
 
@@ -104,6 +106,17 @@ class TrainModel(ABC):
             tracker.log_params(self.model_params())
             tracker.log_cv_results(cv_result)
             tracker.log_test_metrics(test_metrics)
+            confusion_matrix_path = FIGURES_DIR / (
+                f"confusion_matrix_{self.model_name}.png"
+            )
+            EvaluationReporter(save=True).plot_confusion_matrix(
+                estimator,
+                X_test,
+                y_test,
+                self.model_name,
+            )
+            tracker.log_artifact(confusion_matrix_path,
+                                 artifact_path="figures")
             tracker.log_model(
                 estimator,
                 self.model_name,
