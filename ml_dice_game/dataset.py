@@ -39,17 +39,21 @@ class DiceGameDataset:
 
     def validate_game_rules(self) -> dict:
         """Reglas de negocio del juego."""
+        required_columns = CARD_COLUMNS + BOARD_COLUMNS + [
+            "RONDA",
+            "TURNO",
+            TARGET_COLUMN,
+        ]
+        missing_columns = sorted(set(required_columns) - set(self.df.columns))
+
+        if missing_columns:
+            raise ValueError(f"Faltan columnas requeridas: {missing_columns}")
+
         card_sum = self.df[CARD_COLUMNS].sum(axis=1)
         n_nonzero = (self.df[CARD_COLUMNS] != 0).sum(axis=1)
 
         invalid_sum = int((card_sum != CARD_SUM_EXPECTED).sum())
         invalid_nonzero = int((n_nonzero != CARD_NONZERO_EXPECTED).sum())
-
-        required_columns = CARD_COLUMNS + BOARD_COLUMNS + \
-            ["RONDA", "TURNO", TARGET_COLUMN]
-        missing_columns = sorted(set(required_columns) - set(self.df.columns))
-        if missing_columns:
-            raise ValueError(f"Faltan columnas requeridas: {missing_columns}")
 
         invalid_target = int(
             self.df[TARGET_COLUMN].isna().sum()

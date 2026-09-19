@@ -3,8 +3,14 @@ import math
 
 import pandas as pd
 from sklearn.dummy import DummyClassifier
+from sklearn.model_selection import StratifiedKFold, cross_val_predict
 
-from ml_dice_game.modeling.common import evaluate_model, save_json, split_xy
+from ml_dice_game.modeling.common import (
+    evaluate_model,
+    evaluate_predictions,
+    save_json,
+    split_xy,
+)
 
 
 def test_split_xy_removes_target():
@@ -28,3 +34,31 @@ def test_save_json_creates_parent(tmp_path):
     path = tmp_path / "metrics" / "result.json"
     save_json({"ROC_AUC": 0.5}, path)
     assert json.loads(path.read_text(encoding="utf-8"))["ROC_AUC"] == 0.5
+
+
+def test_evaluate_predictions_returns_oof_metrics():
+    X = pd.DataFrame({"feature": range(12)})
+    y = pd.Series([0, 1] * 6)
+
+    model = DummyClassifier(strategy="prior")
+    cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=42)
+
+    predictions = cross_val_predict(model, X, y, cv=cv, method="predict")
+    probabilities = cross_val_predict(
+        model,
+        X,
+        y,
+        cv=cv,
+        method="predict_proba",
+    )[:, 1]
+
+    metrics = evaluate_predictions(y, predictions, probabilities)
+
+    assert set(metrics) == {
+        "Accuracy",
+        "Precision",
+        "Recall",
+        "F1",
+        "ROC_AUC",
+    }
+    assert all(math.isfinite(value) for value in metrics.values())

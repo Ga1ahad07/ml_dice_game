@@ -1,0 +1,11 @@
+{
+  "target": "VENTAJA",
+  "model_path": "D:\\UMSS\\Diplomado\\MODULO 6\\ml_dice_game\\models\\model.pkl",
+  "metrics": {
+    "TEST_Accuracy": 0.8281786941580757,
+    "TEST_Precision": 0.8195121951219512,
+    "TEST_Recall": 0.7272727272727273,
+    "TEST_F1": 0.7706422018348624,
+    "TEST_ROC_AUC": 0.9108175774842442
+  }
+}

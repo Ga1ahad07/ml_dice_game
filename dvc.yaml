@@ -15,13 +15,12 @@ stages:
     cmd: python -m ml_dice_game.features
     deps:
       - data/raw/dataset2.csv
-      - ml_dice_game/config.py
-      - ml_dice_game/features.py
       - data/interim/validation_report.json
+      - ml_dice_game/features.py
+      - ml_dice_game/config.py
     params:
       - random_state
       - split.test_size
-      - split.stratify_col
       - split.cv_n_splits
     outs:
       - data/processed/train.csv
@@ -31,11 +30,12 @@ stages:
     cmd: python -m ml_dice_game.modeling.train_random_forest
     deps:
       - data/processed/train.csv
-      - data/processed/test.csv
       - ml_dice_game/modeling/common.py
-      - ml_dice_game/config.py
       - ml_dice_game/modeling/train_model.py
       - ml_dice_game/modeling/train_random_forest.py
+      - ml_dice_game/plots.py
+      - ml_dice_game/config.py
+      - ml_dice_game/modeling/tracking.py
     params:
       - random_state
       - train.rf
@@ -43,6 +43,8 @@ stages:
     outs:
       - models/base/random_forest.pkl
       - models/base/random_forest.features.json
+      - reports/figures/confusion_matrix_oof_RandomForest.png
+      - reports/figures/roc_curve_oof_RandomForest.png
     metrics:
       - reports/metrics/random_forest.json:
           cache: false
@@ -51,11 +53,12 @@ stages:
     cmd: python -m ml_dice_game.modeling.train_xgboost
     deps:
       - data/processed/train.csv
-      - data/processed/test.csv
       - ml_dice_game/modeling/common.py
-      - ml_dice_game/config.py
       - ml_dice_game/modeling/train_model.py
       - ml_dice_game/modeling/train_xgboost.py
+      - ml_dice_game/plots.py
+      - ml_dice_game/config.py
+      - ml_dice_game/modeling/tracking.py
     params:
       - random_state
       - train.xgb
@@ -63,6 +66,8 @@ stages:
     outs:
       - models/base/xgboost.pkl
       - models/base/xgboost.features.json
+      - reports/figures/confusion_matrix_oof_XGBoost.png
+      - reports/figures/roc_curve_oof_XGBoost.png
     metrics:
       - reports/metrics/xgboost.json:
           cache: false
@@ -70,8 +75,6 @@ stages:
   select_best_model:
     cmd: python -m ml_dice_game.modeling.select_best_model
     deps:
-      - models/base/random_forest.pkl
-      - models/base/xgboost.pkl
       - reports/metrics/random_forest.json
       - reports/metrics/xgboost.json
       - ml_dice_game/modeling/common.py
@@ -89,7 +92,6 @@ stages:
     cmd: python -m ml_dice_game.modeling.tune_best_model
     deps:
       - data/processed/train.csv
-      - data/processed/test.csv
       - models/selection.json
       - models/base/random_forest.pkl
       - models/base/xgboost.pkl
@@ -105,8 +107,34 @@ stages:
     outs:
       - models/model.pkl
       - models/model.features.json
-      - reports/figures/base_vs_tuned_metrics_comparison.png
+      - reports/figures/base_vs_tuned_oof_accuracy_comparison.png
+      - reports/figures/base_vs_tuned_oof_precision_comparison.png
+      - reports/figures/base_vs_tuned_oof_recall_comparison.png
+      - reports/figures/base_vs_tuned_oof_f1_comparison.png
+      - reports/figures/base_vs_tuned_oof_roc_auc_comparison.png
+      - reports/figures/confusion_matrix_oof_Tuned_OOF.png
+      - reports/figures/roc_curve_oof_Tuned_OOF.png
       - reports/figures/shap_global_importance.png
+      - reports/figures/shap_group_importance.png
+      - reports/figures/shap_summary_beeswarm.png
     metrics:
       - reports/metrics/base_vs_tuned.json:
+          cache: false
+
+  evaluate_test:
+    cmd: python -m ml_dice_game.modeling.evaluate_test
+    deps:
+      - data/processed/test.csv
+      - models/selection.json
+      - models/model.pkl
+      - models/model.features.json
+      - ml_dice_game/config.py
+      - ml_dice_game/modeling/common.py
+      - ml_dice_game/modeling/evaluate_test.py
+      - ml_dice_game/plots.py
+    outs:
+      - reports/figures/test_confusion_matrix.png
+      - reports/figures/test_roc_curve.png
+    metrics:
+      - reports/metrics/test.json:
           cache: false

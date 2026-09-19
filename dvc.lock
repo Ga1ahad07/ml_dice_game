@@ -9,12 +9,12 @@ stages:
       size: 137737
     - path: ml_dice_game/config.py
       hash: md5
-      md5: 7fa3db59c7779ab88058d9f008e6feaf
-      size: 2089
+      md5: fbb496ef7e5f28240c1a876719959039
+      size: 1925
     - path: ml_dice_game/dataset.py
       hash: md5
-      md5: 4c0ebdb046da9823e9efc50702a14df8
-      size: 3802
+      md5: e09fb8c59f192432a31765c93d30b24b
+      size: 3840
     params:
       params.yaml:
         random_state: 42
@@ -36,8 +36,8 @@ stages:
       size: 137737
     - path: ml_dice_game/config.py
       hash: md5
-      md5: 7fa3db59c7779ab88058d9f008e6feaf
-      size: 2089
+      md5: fbb496ef7e5f28240c1a876719959039
+      size: 1925
     - path: ml_dice_game/features.py
       hash: md5
       md5: 106428d697530990d0d1aebf8d93c6fd
@@ -46,7 +46,6 @@ stages:
       params.yaml:
         random_state: 42
         split.cv_n_splits: 5
-        split.stratify_col: VENTAJA
         split.test_size: 0.2
     outs:
     - path: data/processed/test.csv
@@ -166,30 +165,34 @@ stages:
   train_random_forest:
     cmd: python -m ml_dice_game.modeling.train_random_forest
     deps:
-    - path: data/processed/test.csv
-      hash: md5
-      md5: 86a73892ecebeb014b5a4a582a612e02
-      size: 27648
     - path: data/processed/train.csv
       hash: md5
       md5: e408c1888215f046802ac0108ddea959
       size: 110182
     - path: ml_dice_game/config.py
       hash: md5
-      md5: 7fa3db59c7779ab88058d9f008e6feaf
-      size: 2089
+      md5: fbb496ef7e5f28240c1a876719959039
+      size: 1925
     - path: ml_dice_game/modeling/common.py
       hash: md5
-      md5: f90f06a214baacd6b65653f8375979c4
-      size: 2162
+      md5: 18d581b815b52357b4300cb6b76b1654
+      size: 2358
+    - path: ml_dice_game/modeling/tracking.py
+      hash: md5
+      md5: 8bcc08b0899037b71f211b293c32a4fe
+      size: 2827
     - path: ml_dice_game/modeling/train_model.py
       hash: md5
-      md5: 2edae3ee286af7b21e01868cbf8c88ab
-      size: 4542
+      md5: fb14366ce68edd9b06c84f6dc9b3829f
+      size: 5576
     - path: ml_dice_game/modeling/train_random_forest.py
       hash: md5
-      md5: 0dc6a0f4c796c5fc734b53fe8c4cf987
-      size: 1114
+      md5: eae06e010ac1bc35532e12e8e779a0bd
+      size: 1028
+    - path: ml_dice_game/plots.py
+      hash: md5
+      md5: 61ce7a7071755a38f79014efdb8aa6d0
+      size: 11103
     params:
       params.yaml:
         random_state: 42
@@ -205,37 +208,49 @@ stages:
       hash: md5
       md5: 650b134a62d6aa5b7135523151650e92
       size: 30501337
+    - path: reports/figures/confusion_matrix_oof_RandomForest.png
+      hash: md5
+      md5: 57980f9c03f377daf777c4b5dccea74c
+      size: 20634
+    - path: reports/figures/roc_curve_oof_RandomForest.png
+      hash: md5
+      md5: 8115f349b75455bc6f949ed63c5822d7
+      size: 66952
     - path: reports/metrics/random_forest.json
       hash: md5
-      md5: 41ac93f73852d3a5b6a0145caa51659f
-      size: 954
+      md5: b85039f1068a2c2984f8a3be84bf7343
+      size: 975
   train_xgboost:
     cmd: python -m ml_dice_game.modeling.train_xgboost
     deps:
-    - path: data/processed/test.csv
-      hash: md5
-      md5: 86a73892ecebeb014b5a4a582a612e02
-      size: 27648
     - path: data/processed/train.csv
       hash: md5
       md5: e408c1888215f046802ac0108ddea959
       size: 110182
     - path: ml_dice_game/config.py
       hash: md5
-      md5: 7fa3db59c7779ab88058d9f008e6feaf
-      size: 2089
+      md5: fbb496ef7e5f28240c1a876719959039
+      size: 1925
     - path: ml_dice_game/modeling/common.py
       hash: md5
-      md5: f90f06a214baacd6b65653f8375979c4
-      size: 2162
+      md5: 18d581b815b52357b4300cb6b76b1654
+      size: 2358
+    - path: ml_dice_game/modeling/tracking.py
+      hash: md5
+      md5: 8bcc08b0899037b71f211b293c32a4fe
+      size: 2827
     - path: ml_dice_game/modeling/train_model.py
       hash: md5
-      md5: 2edae3ee286af7b21e01868cbf8c88ab
-      size: 4542
+      md5: fb14366ce68edd9b06c84f6dc9b3829f
+      size: 5576
     - path: ml_dice_game/modeling/train_xgboost.py
       hash: md5
-      md5: 365fef657cbc76335e43e3ff36c3a30a
-      size: 1052
+      md5: 5f1c1104cddb7fc5a05f8147e773f28e
+      size: 966
+    - path: ml_dice_game/plots.py
+      hash: md5
+      md5: 61ce7a7071755a38f79014efdb8aa6d0
+      size: 11103
     params:
       params.yaml:
         random_state: 42
@@ -253,89 +268,85 @@ stages:
       hash: md5
       md5: a20cda49eb515f2b88fbc2104a46cf10
       size: 835297
+    - path: reports/figures/confusion_matrix_oof_XGBoost.png
+      hash: md5
+      md5: fc6372408fac56b48f30cf1337b46776
+      size: 20662
+    - path: reports/figures/roc_curve_oof_XGBoost.png
+      hash: md5
+      md5: e16aee5b8e058cd4c8af7d3551213d71
+      size: 59239
     - path: reports/metrics/xgboost.json
       hash: md5
-      md5: 3a51001231fb00a9c2bcf435bc652bf1
-      size: 1565
+      md5: 020a44e09d417cf36097319408949a4d
+      size: 1585
   select_best_model:
     cmd: python -m ml_dice_game.modeling.select_best_model
     deps:
     - path: ml_dice_game/config.py
       hash: md5
-      md5: 7fa3db59c7779ab88058d9f008e6feaf
-      size: 2089
+      md5: fbb496ef7e5f28240c1a876719959039
+      size: 1925
     - path: ml_dice_game/modeling/common.py
       hash: md5
-      md5: f90f06a214baacd6b65653f8375979c4
-      size: 2162
+      md5: 18d581b815b52357b4300cb6b76b1654
+      size: 2358
     - path: ml_dice_game/modeling/select_best_model.py
       hash: md5
-      md5: 2df4222fd70ef9b6d4e4ce593d99e71e
-      size: 1714
+      md5: 45cab5c2831bfe4e38a177f63bbc2841
+      size: 3433
     - path: ml_dice_game/plots.py
       hash: md5
-      md5: 4da972148b515de7fa571fd187e36968
-      size: 8853
-    - path: models/base/random_forest.pkl
-      hash: md5
-      md5: 650b134a62d6aa5b7135523151650e92
-      size: 30501337
-    - path: models/base/xgboost.pkl
-      hash: md5
-      md5: a20cda49eb515f2b88fbc2104a46cf10
-      size: 835297
+      md5: 61ce7a7071755a38f79014efdb8aa6d0
+      size: 11103
     - path: reports/metrics/random_forest.json
       hash: md5
-      md5: 41ac93f73852d3a5b6a0145caa51659f
-      size: 954
+      md5: b85039f1068a2c2984f8a3be84bf7343
+      size: 975
     - path: reports/metrics/xgboost.json
       hash: md5
-      md5: 3a51001231fb00a9c2bcf435bc652bf1
-      size: 1565
+      md5: 020a44e09d417cf36097319408949a4d
+      size: 1585
     outs:
     - path: models/selection.json
       hash: md5
-      md5: a9c403a3fe53f57266e61ef1a307f458
-      size: 633
+      md5: ad7c03a7285c9e1080e55323ca7c86fb
+      size: 1120
     - path: reports/figures/base_models_metrics_comparison.png
       hash: md5
-      md5: 78995d1d02abff860cddef49c8ba220b
-      size: 87819
+      md5: d11e68388635b973292e985a2e10248c
+      size: 87803
     - path: reports/metrics/base_models.json
       hash: md5
-      md5: 61670a413242ab0764eb924a38dfd387
-      size: 403
+      md5: 0414753c259d128aecc80ce2e9b2a020
+      size: 825
   tune_best_model:
     cmd: python -m ml_dice_game.modeling.tune_best_model
     deps:
-    - path: data/processed/test.csv
-      hash: md5
-      md5: 86a73892ecebeb014b5a4a582a612e02
-      size: 27648
     - path: data/processed/train.csv
       hash: md5
       md5: e408c1888215f046802ac0108ddea959
       size: 110182
     - path: ml_dice_game/config.py
       hash: md5
-      md5: 7fa3db59c7779ab88058d9f008e6feaf
-      size: 2089
+      md5: fbb496ef7e5f28240c1a876719959039
+      size: 1925
     - path: ml_dice_game/explain.py
       hash: md5
-      md5: e304d8e8a1c9b223be51abad1d649704
-      size: 2727
+      md5: 0e7d6517a9f33a0ba6658258ad0286b1
+      size: 3703
     - path: ml_dice_game/modeling/common.py
       hash: md5
-      md5: f90f06a214baacd6b65653f8375979c4
-      size: 2162
+      md5: 18d581b815b52357b4300cb6b76b1654
+      size: 2358
     - path: ml_dice_game/modeling/tune_best_model.py
       hash: md5
-      md5: 6d3ea1eb3c82a52ab4ab9a87b8fe0e97
-      size: 3583
+      md5: 7d1169402bd0ff6ea351f71c72395319
+      size: 6354
     - path: ml_dice_game/plots.py
       hash: md5
-      md5: 4da972148b515de7fa571fd187e36968
-      size: 8853
+      md5: 61ce7a7071755a38f79014efdb8aa6d0
+      size: 11103
     - path: models/base/random_forest.pkl
       hash: md5
       md5: 650b134a62d6aa5b7135523151650e92
@@ -346,8 +357,8 @@ stages:
       size: 835297
     - path: models/selection.json
       hash: md5
-      md5: a9c403a3fe53f57266e61ef1a307f458
-      size: 633
+      md5: ad7c03a7285c9e1080e55323ca7c86fb
+      size: 1120
     params:
       params.yaml:
         random_state: 42
@@ -429,15 +440,95 @@ stages:
       hash: md5
       md5: 175d20479e0d2dfd8490e1bb537cdfed
       size: 2212191
-    - path: reports/figures/base_vs_tuned_metrics_comparison.png
+    - path: reports/figures/base_vs_tuned_oof_accuracy_comparison.png
       hash: md5
-      md5: 2cab517bb117f789a6e7fc81fda66354
-      size: 68471
+      md5: fb23590222604c239e19582a698240de
+      size: 20974
+    - path: reports/figures/base_vs_tuned_oof_f1_comparison.png
+      hash: md5
+      md5: 71ea2fbb13968dffa5419efb270a7d9f
+      size: 17085
+    - path: reports/figures/base_vs_tuned_oof_precision_comparison.png
+      hash: md5
+      md5: 95216d85402550b349ef04201ddb3f00
+      size: 19486
+    - path: reports/figures/base_vs_tuned_oof_recall_comparison.png
+      hash: md5
+      md5: f33891b7e5ae110577014e4dab8ca3a0
+      size: 18928
+    - path: reports/figures/base_vs_tuned_oof_roc_auc_comparison.png
+      hash: md5
+      md5: fac0ee1093241059b17382f9e9841daf
+      size: 20929
+    - path: reports/figures/confusion_matrix_oof_Tuned_OOF.png
+      hash: md5
+      md5: 616b7543787ec4793955db73727fb19f
+      size: 18894
+    - path: reports/figures/roc_curve_oof_Tuned_OOF.png
+      hash: md5
+      md5: c48d02d20ec341f5ea2d1787fdfcac40
+      size: 58806
     - path: reports/figures/shap_global_importance.png
       hash: md5
-      md5: 5352c05021d54a14111b383eeb22b6cd
-      size: 58390
+      md5: e9268d854b2c8fb9f8d3babf155457d6
+      size: 84106
+    - path: reports/figures/shap_group_importance.png
+      hash: md5
+      md5: 0fde672bd62ce8539272893d84ad1e62
+      size: 27388
+    - path: reports/figures/shap_summary_beeswarm.png
+      hash: md5
+      md5: c48ecb0770e8f8ba7b599c11ef552a04
+      size: 665709
     - path: reports/metrics/base_vs_tuned.json
       hash: md5
-      md5: dced83aeaf9aaa19cd14a14112bf302d
-      size: 709
+      md5: f07ab1c897288a2f83d2aa45b1104800
+      size: 719
+  evaluate_test:
+    cmd: python -m ml_dice_game.modeling.evaluate_test
+    deps:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: 86a73892ecebeb014b5a4a582a612e02
+      size: 27648
+    - path: ml_dice_game/config.py
+      hash: md5
+      md5: fbb496ef7e5f28240c1a876719959039
+      size: 1925
+    - path: ml_dice_game/modeling/common.py
+      hash: md5
+      md5: 18d581b815b52357b4300cb6b76b1654
+      size: 2358
+    - path: ml_dice_game/modeling/evaluate_test.py
+      hash: md5
+      md5: aaebdc861ec10fdf120fdd1b4a68478e
+      size: 2920
+    - path: ml_dice_game/plots.py
+      hash: md5
+      md5: 61ce7a7071755a38f79014efdb8aa6d0
+      size: 11103
+    - path: models/model.features.json
+      hash: md5
+      md5: d43fcb11e90697c75302fe7c0c1ae632
+      size: 207
+    - path: models/model.pkl
+      hash: md5
+      md5: 175d20479e0d2dfd8490e1bb537cdfed
+      size: 2212191
+    - path: models/selection.json
+      hash: md5
+      md5: ad7c03a7285c9e1080e55323ca7c86fb
+      size: 1120
+    outs:
+    - path: reports/figures/test_confusion_matrix.png
+      hash: md5
+      md5: da4fd6eb12a2208962b3b3901853aeea
+      size: 19096
+    - path: reports/figures/test_roc_curve.png
+      hash: md5
+      md5: 0bd6f7908b8fadc58b03a89161f386a5
+      size: 52868
+    - path: reports/metrics/test.json
+      hash: md5
+      md5: ac8a22906e39f86354bdfa53072edbab
+      size: 333

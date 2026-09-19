@@ -62,3 +62,9 @@ class ExperimentTracker:
         )
         logger.success(
             f"{registered_model_name} v{version} promovido a Production")
+
+    @staticmethod
+    def log_oof_metrics(metrics: dict, prefix: str = "oof_"):
+        """Registra métricas calculadas con predicciones out-of-fold."""
+        for key, value in metrics.items():
+            mlflow.log_metric(f"{prefix}{key}", float(value))

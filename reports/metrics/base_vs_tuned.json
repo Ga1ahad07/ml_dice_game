@@ -1,20 +1,20 @@
 {
   "target": "VENTAJA",
   "selected_model": "XGBoost",
-  "selection_metric": "ROC_AUC",
-  "base": {
-    "Accuracy": 0.8384879725085911,
-    "Precision": 0.8215962441314554,
-    "Recall": 0.7575757575757576,
-    "F1": 0.7882882882882883,
-    "ROC_AUC": 0.9016292349625682
+  "selection_metric": "CV_ROC_AUC",
+  "base_oof": {
+    "Accuracy": 0.8012903225806451,
+    "Precision": 0.7601351351351351,
+    "Recall": 0.7305194805194806,
+    "F1": 0.7450331125827815,
+    "ROC_AUC": 0.8736593527814085
   },
-  "tuned": {
-    "Accuracy": 0.8281786941580757,
-    "Precision": 0.8195121951219512,
-    "Recall": 0.7272727272727273,
-    "F1": 0.7706422018348624,
-    "ROC_AUC": 0.9108175774842442
+  "tuned_oof": {
+    "Accuracy": 0.8120430107526881,
+    "Precision": 0.7808535178777394,
+    "Recall": 0.7326839826839827,
+    "F1": 0.756002233389168,
+    "ROC_AUC": 0.8755426705105506
   },
   "best_params": {
     "subsample": 0.8,

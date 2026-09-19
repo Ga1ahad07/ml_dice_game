@@ -6,12 +6,18 @@ import shap
 
 
 class ShapExplainer:
-    """Explica un clasificador de arbol para la clase positiva de VENTAJA."""
+    """Explica un clasificador usando únicamente los datos proporcionados."""
 
-    def __init__(self, model, X_test: pd.DataFrame, positive_class: int = 1):
-        self.X_test = X_test
+    def __init__(
+        self,
+        model,
+        X_data: pd.DataFrame,
+        positive_class: int = 1,
+    ):
+        self.X_data = X_data
         self.positive_class = positive_class
-        raw_explanation = shap.TreeExplainer(model)(X_test)
+
+        raw_explanation = shap.TreeExplainer(model)(X_data)
         self.explanation = self._select_positive_class(raw_explanation)
 
     def _select_positive_class(self, explanation: shap.Explanation) -> shap.Explanation:
@@ -24,7 +30,7 @@ class ShapExplainer:
         path.parent.mkdir(parents=True, exist_ok=True)
         shap.summary_plot(
             self.explanation,
-            self.X_test,
+            self.X_data,
             plot_type="bar",
             show=False,
         )
@@ -37,7 +43,7 @@ class ShapExplainer:
         path.parent.mkdir(parents=True, exist_ok=True)
         shap.summary_plot(
             self.explanation,
-            self.X_test,
+            self.X_data,
             show=False,
         )
         plt.tight_layout()
@@ -46,13 +52,13 @@ class ShapExplainer:
 
     def save_group_importance(self, group_map: dict[str, str], path: Path) -> None:
         """Guarda la importancia SHAP agregada por grupo de variables."""
-        missing = set(self.X_test.columns) - set(group_map)
+        missing = set(self.X_data.columns) - set(group_map)
         if missing:
             raise ValueError(f"No hay grupo SHAP para: {sorted(missing)}")
 
         importance = pd.Series(
             abs(self.explanation.values).mean(axis=0),
-            index=self.X_test.columns,
+            index=self.X_data.columns,
         )
         grouped = importance.groupby(importance.index.map(group_map)).sum()
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -66,14 +72,14 @@ class ShapExplainer:
 
     def save_dependence_plot(self, feature: str, path: Path) -> None:
         """Guarda la dependencia SHAP de una variable sobre VENTAJA=1."""
-        if feature not in self.X_test.columns:
-            raise ValueError(f"La feature '{feature}' no existe en X_test")
+        if feature not in self.X_data.columns:
+            raise ValueError(f"La feature '{feature}' no existe en X_data")
 
         path.parent.mkdir(parents=True, exist_ok=True)
         shap.dependence_plot(
             feature,
             self.explanation.values,
-            self.X_test,
+            self.X_data,
             show=False,
         )
         plt.title(f"Dependencia SHAP: {feature} sobre VENTAJA=1")
@@ -83,8 +89,8 @@ class ShapExplainer:
 
     def save_local_waterfall(self, index: int, path: Path) -> None:
         """Guarda la explicación local de una fila para VENTAJA=1."""
-        if index < 0 or index >= len(self.X_test):
-            raise IndexError(f"El indice {index} no existe en X_test")
+        if index < 0 or index >= len(self.X_data):
+            raise IndexError(f"El indice {index} no existe en X_data")
 
         path.parent.mkdir(parents=True, exist_ok=True)
         shap.plots.waterfall(self.explanation[index], show=False)

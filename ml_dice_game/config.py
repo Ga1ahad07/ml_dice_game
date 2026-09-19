@@ -22,6 +22,8 @@ MODELS_DIR = PROJ_ROOT / "models"
 
 REPORTS_DIR = PROJ_ROOT / "reports"
 FIGURES_DIR = REPORTS_DIR / "figures"
+OOF_FIGURES_DIR = FIGURES_DIR / "oof"
+TEST_FIGURES_DIR = FIGURES_DIR / "test"
 
 RANDOM_STATE = 42
 
@@ -67,16 +69,5 @@ PARAMS_PATH = PROJ_ROOT / "params.yaml"
 
 
 def load_params() -> dict:
-    with open(PARAMS_PATH) as f:
-        return yaml.safe_load(f)
-
-
-# If tqdm is installed, configure loguru with tqdm.write
-# https://github.com/Delgan/loguru/issues/135
-try:
-    from tqdm import tqdm
-
-    logger.remove(0)
-    logger.add(lambda msg: tqdm.write(msg, end=""), colorize=True)
-except ModuleNotFoundError:
-    pass
+    with PARAMS_PATH.open(encoding="utf-8") as file:
+        return yaml.safe_load(file) or {}

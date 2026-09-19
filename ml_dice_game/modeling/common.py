@@ -22,8 +22,9 @@ SCORING = {
 }
 
 
-def load_train_test(train_path: Path, test_path: Path) -> tuple[pd.DataFrame, pd.DataFrame]:
-    return pd.read_csv(train_path), pd.read_csv(test_path)
+def load_train(train_path: Path) -> pd.DataFrame:
+    """Carga únicamente datos de entrenamiento."""
+    return pd.read_csv(train_path)
 
 
 def split_xy(frame: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
@@ -38,6 +39,22 @@ def make_cv(cv_n_splits: int, random_state: int = RANDOM_STATE) -> StratifiedKFo
     )
 
 
+def evaluate_predictions(
+    y_true: pd.Series,
+    predictions,
+    probabilities,
+) -> dict[str, float]:
+    return {
+        "Accuracy": float(accuracy_score(y_true, predictions)),
+        "Precision": float(
+            precision_score(y_true, predictions, zero_division=0)
+        ),
+        "Recall": float(recall_score(y_true, predictions, zero_division=0)),
+        "F1": float(f1_score(y_true, predictions, zero_division=0)),
+        "ROC_AUC": float(roc_auc_score(y_true, probabilities)),
+    }
+
+
 def evaluate_model(
     model: ClassifierMixin,
     X_test: pd.DataFrame,
@@ -45,13 +62,7 @@ def evaluate_model(
 ) -> dict[str, float]:
     predictions = model.predict(X_test)
     probabilities = model.predict_proba(X_test)[:, 1]
-    return {
-        "Accuracy": float(accuracy_score(y_test, predictions)),
-        "Precision": float(precision_score(y_test, predictions, zero_division=0)),
-        "Recall": float(recall_score(y_test, predictions, zero_division=0)),
-        "F1": float(f1_score(y_test, predictions, zero_division=0)),
-        "ROC_AUC": float(roc_auc_score(y_test, probabilities)),
-    }
+    return evaluate_predictions(y_test, predictions, probabilities)
 
 
 def save_json(payload: dict, path: Path) -> None:

@@ -6,13 +6,16 @@ split:
   stratify_col: VENTAJA
   cv_n_splits: 5
 
+selection:
+  metric: roc_auc
+
 train:
   rf:
     n_estimators: 300
   xgb:
     n_estimators: 300
-    objective: binary:logistic
-    eval_metric: logloss
+    objective: "binary:logistic"
+    eval_metric: "logloss"
 
 tune:
   n_iter: 50

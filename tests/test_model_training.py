@@ -62,21 +62,13 @@ def test_run_writes_model_and_metrics(tmp_path, small_params):
         "feature": [1, 2, 3, 4, 5, 6, 7, 8],
         "VENTAJA": [0, 1, 0, 1, 0, 1, 0, 1],
     })
-    test = pd.DataFrame({
-        "RONDA": [1, 2, 3, 4],
-        "feature": [9, 10, 11, 12],
-        "VENTAJA": [0, 1, 0, 1],
-    })
     train_path = tmp_path / "train.csv"
-    test_path = tmp_path / "test.csv"
     model_path = tmp_path / "models" / "rf.pkl"
     metrics_path = tmp_path / "metrics" / "rf.json"
     train.to_csv(train_path, index=False)
-    test.to_csv(test_path, index=False)
 
     trainer = RandomForestTrainer(
         train_path=train_path,
-        test_path=test_path,
         model_path=model_path,
         metrics_path=metrics_path,
         params=small_params,
@@ -88,8 +80,8 @@ def test_run_writes_model_and_metrics(tmp_path, small_params):
     assert metrics_path.exists()
     assert payload["model"] == "RandomForest"
     assert payload["target"] == "VENTAJA"
-    assert set(("Accuracy", "Precision", "Recall",
-               "F1", "ROC_AUC")).issubset(payload)
+    assert set(("OOF_Accuracy", "OOF_Precision", "OOF_Recall",
+               "OOF_F1", "OOF_ROC_AUC")).issubset(payload)
     assert set((
         "cv_Accuracy_mean",
         "cv_Precision_mean",
@@ -98,3 +90,52 @@ def test_run_writes_model_and_metrics(tmp_path, small_params):
         "cv_ROC_AUC_mean",
     )).issubset(payload)
     assert json.loads(metrics_path.read_text())["model"] == "RandomForest"
+
+
+def test_run_writes_model_and_oof_metrics(tmp_path, small_params):
+    train = pd.DataFrame({
+        "RONDA": [1, 1, 2, 2, 3, 3, 4, 4],
+        "feature": [1, 2, 3, 4, 5, 6, 7, 8],
+        "VENTAJA": [0, 1, 0, 1, 0, 1, 0, 1],
+    })
+
+    train_path = tmp_path / "train.csv"
+    model_path = tmp_path / "models" / "rf.pkl"
+    metrics_path = tmp_path / "metrics" / "rf.json"
+    train.to_csv(train_path, index=False)
+
+    trainer = RandomForestTrainer(
+        train_path=train_path,
+        model_path=model_path,
+        metrics_path=metrics_path,
+        params=small_params,
+    )
+
+    payload = trainer.run()
+
+    assert model_path.exists()
+    assert model_path.with_suffix(".features.json").exists()
+    assert metrics_path.exists()
+
+    assert payload["model"] == "RandomForest"
+    assert payload["target"] == "VENTAJA"
+
+    assert set((
+        "OOF_Accuracy",
+        "OOF_Precision",
+        "OOF_Recall",
+        "OOF_F1",
+        "OOF_ROC_AUC",
+    )).issubset(payload)
+
+    assert set((
+        "cv_Accuracy_mean",
+        "cv_Precision_mean",
+        "cv_Recall_mean",
+        "cv_F1_mean",
+        "cv_ROC_AUC_mean",
+    )).issubset(payload)
+
+    saved_payload = json.loads(metrics_path.read_text(encoding="utf-8"))
+    assert saved_payload["model"] == "RandomForest"
+    assert "test" not in json.dumps(saved_payload).lower()

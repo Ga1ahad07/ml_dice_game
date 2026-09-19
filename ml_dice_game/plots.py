@@ -1,14 +1,16 @@
 from __future__ import annotations
+from ml_dice_game.config import BOARD_COLUMNS, CARD_COLUMNS, FIGURES_DIR, TARGET_COLUMN
+from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix, roc_auc_score, roc_curve
+from loguru import logger
+import seaborn as sns
+import pandas as pd
+import matplotlib.pyplot as plt
 
 from pathlib import Path
 
-import matplotlib.pyplot as plt
-import pandas as pd
-import seaborn as sns
-from loguru import logger
-from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix, roc_auc_score, roc_curve
+import matplotlib
 
-from ml_dice_game.config import BOARD_COLUMNS, CARD_COLUMNS, FIGURES_DIR, TARGET_COLUMN
+matplotlib.use("Agg")
 
 
 class _FigureReporter:
@@ -24,7 +26,8 @@ class _FigureReporter:
             output_path = self.save_dir / filename
             fig.savefig(output_path, dpi=150, bbox_inches="tight")
             logger.info(f"Figura guardada en {output_path}")
-        plt.show()
+        else:
+            plt.show()
         return fig
 
 
@@ -187,6 +190,25 @@ class EvaluationReporter(_FigureReporter):
         self._finish(fig, f"confusion_matrix_{model_name}.png")
         return matrix
 
+    def plot_confusion_matrix_from_predictions(
+        self,
+        y_true,
+        predictions,
+        model_name: str,
+    ):
+        matrix = confusion_matrix(y_true, predictions)
+        fig, ax = plt.subplots(figsize=(5, 4.5))
+
+        ConfusionMatrixDisplay(
+            confusion_matrix=matrix,
+            display_labels=["0", "1"],
+        ).plot(ax=ax, colorbar=False, cmap="Blues")
+
+        ax.set_title(f"{model_name}: matriz de confusion OOF")
+        ax.grid(False)
+        self._finish(fig, f"confusion_matrix_oof_{model_name}.png")
+        return matrix
+
     def plot_roc_curves(
         self,
         fitted_models: dict,
@@ -213,6 +235,33 @@ class EvaluationReporter(_FigureReporter):
         ax.set_title("Curva ROC - comparacion de modelos")
         ax.legend()
         self._finish(fig, filename)
+
+    def plot_roc_curve_from_predictions(
+        self,
+        y_true,
+        probabilities,
+        model_name: str,
+    ):
+        false_positive_rate, true_positive_rate, _ = roc_curve(
+            y_true,
+            probabilities,
+        )
+        auc = roc_auc_score(y_true, probabilities)
+
+        fig, ax = plt.subplots(figsize=(6, 6))
+        ax.plot(
+            false_positive_rate,
+            true_positive_rate,
+            label=f"{model_name} (AUC = {auc:.3f})",
+        )
+        ax.plot([0, 1], [0, 1], "k--", label="Azar (AUC = 0.5)")
+        ax.set_xlabel("Tasa de falsos positivos")
+        ax.set_ylabel("Tasa de verdaderos positivos")
+        ax.set_title(f"Curva ROC OOF - {model_name}")
+        ax.legend()
+
+        self._finish(fig, f"roc_curve_oof_{model_name}.png")
+        return auc
 
     def plot_classification_report(self, model, X_test, y_test, model_name: str):
         from sklearn.metrics import classification_report
