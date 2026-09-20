@@ -1,51 +1,43 @@
 from fastapi import FastAPI, HTTPException
 import pandas as pd
-from loguru import logger
 
-from api.model_service import model_service
-from api.schemas import (
-    BatchPredictRequest,
-    BatchPredictResponse,
-    PredictRequest,
-    PredictResponse,
-)
+from api.model_service import ModelService
+from api.schemas import HealthResponse, PredictionRequest, PredictionResponse, BatchPredictRequest, BatchPredictResponse
 
-app = FastAPI(title="ml_dice_game API", version="0.1.0")
+app = FastAPI(title="ML Dice Game API", version="1.0.0")
+service = ModelService()
 
 
-@app.on_event("startup")
-def startup():
-    model_service.load()
+@app.get("/health", response_model=HealthResponse)
+def health() -> HealthResponse:
+    return HealthResponse(
+        status="ok" if service.is_ready else "model_not_ready",
+        model_loaded=service.is_ready,
+    )
 
 
-@app.get("/health")
-def health():
-    return {"status": "ok", "model_source": model_service.source}
-
-
-@app.post("/predict", response_model=PredictResponse)
-def predict(request: PredictRequest):
+@app.post("/predict", response_model=PredictionResponse)
+def predict(request: PredictionRequest) -> PredictionResponse:
     try:
-        df = pd.DataFrame([request.model_dump()])
-        result = model_service.predict(df)
-        return PredictResponse(
-            prediction=int(result["predictions"][0]),
-            probability=float(result["probabilities"][0]),
-            model_source=model_service.source,
-        )
-    except Exception as e:
-        logger.exception("Error en /predict")
-        raise HTTPException(status_code=500, detail=str(e))
+        result = service.predict(request.model_dump())
+    except FileNotFoundError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    return PredictionResponse(**result)
 
 
 @app.post("/predict/batch", response_model=BatchPredictResponse)
-def predict_batch(request: BatchPredictRequest):
-    validated_rows = [PredictRequest.model_validate(
-        row) for row in request.rows]
-    df = pd.DataFrame([row.model_dump() for row in validated_rows])
-    result = model_service.predict(df)
+def predict_batch(request: BatchPredictRequest) -> BatchPredictResponse:
+    rows = [row.model_dump() for row in request.rows]
+    try:
+        result = service.predict_batch(rows)
+    except FileNotFoundError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
     return BatchPredictResponse(
         predictions=result["predictions"],
         probabilities=result["probabilities"],
-        model_source=model_service.source,
+        model_source=service.source,
     )

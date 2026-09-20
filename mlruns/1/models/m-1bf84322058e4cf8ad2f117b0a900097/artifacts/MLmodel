@@ -1,0 +1,22 @@
+artifact_path: file:D:/UMSS/Diplomado/MODULO 6/ml_dice_game/mlruns/1/models/m-1bf84322058e4cf8ad2f117b0a900097/artifacts
+flavors:
+  python_function:
+    data: model.ubj
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.xgboost
+    python_version: 3.13.12
+  xgboost:
+    code: null
+    data: model.ubj
+    model_class: xgboost.sklearn.XGBClassifier
+    model_format: ubj
+    xgb_version: 3.2.0
+mlflow_version: 3.16.0
+model_id: m-1bf84322058e4cf8ad2f117b0a900097
+model_size_bytes: 2208890
+model_uuid: m-1bf84322058e4cf8ad2f117b0a900097
+prompts: null
+run_id: 47c071c670434b8d904442a343284ee6
+utc_time_created: '2026-09-20 00:56:05.290191'

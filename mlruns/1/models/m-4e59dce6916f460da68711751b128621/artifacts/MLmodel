@@ -1,0 +1,23 @@
+artifact_path: file:D:/UMSS/Diplomado/MODULO 6/ml_dice_game/mlruns/1/models/m-4e59dce6916f460da68711751b128621/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.skops
+    predict_fn: predict
+    python_version: 3.13.12
+  sklearn:
+    code: null
+    pickled_model: model.skops
+    serialization_format: skops
+    sklearn_version: 1.9.0
+    skops_trusted_types: null
+mlflow_version: 3.16.0
+model_id: m-4e59dce6916f460da68711751b128621
+model_size_bytes: 35433508
+model_uuid: m-4e59dce6916f460da68711751b128621
+prompts: null
+run_id: 4faf20a3808740a8973181b10889c566
+utc_time_created: '2026-09-20 00:55:24.558180'

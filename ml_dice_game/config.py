@@ -19,6 +19,8 @@ PROCESSED_DATA_DIR = DATA_DIR / "processed"
 EXTERNAL_DATA_DIR = DATA_DIR / "external"
 
 MODELS_DIR = PROJ_ROOT / "models"
+FINAL_MODEL_PATH = MODELS_DIR / "final" / "model.pkl"
+FINAL_FEATURES_PATH = MODELS_DIR / "final" / "features.json"
 
 REPORTS_DIR = PROJ_ROOT / "reports"
 FIGURES_DIR = REPORTS_DIR / "figures"
@@ -45,6 +47,8 @@ CLASSIFICATION_SCORING = {
     "f1": "f1",
     "roc_auc": "roc_auc",
 }
+
+METRIC_NAMES = ("Accuracy", "Precision", "Recall", "F1", "ROC_AUC")
 
 XGB_PARAM_DISTRIBUTIONS = {
     "n_estimators": [200, 300, 500, 800],

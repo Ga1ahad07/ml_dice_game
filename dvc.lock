@@ -532,3 +532,280 @@ stages:
       hash: md5
       md5: ac8a22906e39f86354bdfa53072edbab
       size: 333
+  validate:
+    cmd: python -m ml_dice_game.pipeline validate
+    deps:
+    - path: data/raw/dataset2.csv
+      hash: md5
+      md5: b18228af3fe1e9e8fa5c59f500894f32
+      size: 137737
+    - path: ml_dice_game/dataset.py
+      hash: md5
+      md5: e09fb8c59f192432a31765c93d30b24b
+      size: 3840
+    - path: ml_dice_game/pipeline.py
+      hash: md5
+      md5: 7719de4880bbdbe1ae2c8e9cc8912538
+      size: 6561
+    outs:
+    - path: data/interim/validation_report.json
+      hash: md5
+      md5: 070905c4535fc3f6a3351650656d5a50
+      size: 196
+  split:
+    cmd: python -m ml_dice_game.pipeline split
+    deps:
+    - path: data/raw/dataset2.csv
+      hash: md5
+      md5: b18228af3fe1e9e8fa5c59f500894f32
+      size: 137737
+    - path: ml_dice_game/features.py
+      hash: md5
+      md5: 106428d697530990d0d1aebf8d93c6fd
+      size: 3991
+    - path: ml_dice_game/pipeline.py
+      hash: md5
+      md5: 7719de4880bbdbe1ae2c8e9cc8912538
+      size: 6561
+    params:
+      params.yaml:
+        random_state: 42
+        split:
+          test_size: 0.2
+          stratify_col: VENTAJA
+          cv_n_splits: 5
+    outs:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: 86a73892ecebeb014b5a4a582a612e02
+      size: 27648
+    - path: data/processed/train.csv
+      hash: md5
+      md5: e408c1888215f046802ac0108ddea959
+      size: 110182
+  train:
+    cmd: python -m ml_dice_game.pipeline train
+    deps:
+    - path: data/processed/train.csv
+      hash: md5
+      md5: e408c1888215f046802ac0108ddea959
+      size: 110182
+    - path: ml_dice_game/modeling/common.py
+      hash: md5
+      md5: cd9252f07cb1182a54625d2e23b39597
+      size: 3588
+    - path: ml_dice_game/modeling/select_best_model.py
+      hash: md5
+      md5: ff1134b8cc53606c010759442e61e8d5
+      size: 620
+    - path: ml_dice_game/modeling/tracking.py
+      hash: md5
+      md5: 6355a134aa3ab0fabbd45418784376de
+      size: 1414
+    - path: ml_dice_game/modeling/train_model.py
+      hash: md5
+      md5: c2ddf6ff89111beb248804278f842788
+      size: 464
+    - path: ml_dice_game/modeling/train_random_forest.py
+      hash: md5
+      md5: 275723c23520ff175d06f686335e6bc2
+      size: 439
+    - path: ml_dice_game/modeling/train_xgboost.py
+      hash: md5
+      md5: e142a1aa8658797b024d4bbc385ad34f
+      size: 379
+    - path: ml_dice_game/pipeline.py
+      hash: md5
+      md5: 7719de4880bbdbe1ae2c8e9cc8912538
+      size: 6561
+    params:
+      params.yaml:
+        mlflow:
+          experiment_name: ml_dice_game
+          registered_model_name: ml_dice_game_ventaja_classifier
+        random_state: 42
+        split:
+          test_size: 0.2
+          stratify_col: VENTAJA
+          cv_n_splits: 5
+        train:
+          rf:
+            n_estimators: 300
+          xgb:
+            n_estimators: 300
+            objective: binary:logistic
+            eval_metric: logloss
+    outs:
+    - path: models/base/randomforest.pkl
+      hash: md5
+      md5: 650b134a62d6aa5b7135523151650e92
+      size: 30501337
+    - path: models/base/xgboost.pkl
+      hash: md5
+      md5: a20cda49eb515f2b88fbc2104a46cf10
+      size: 835297
+    - path: reports/figures/oof
+      hash: md5
+      md5: 2685629720ddeec0fb50e0201259e5d1.dir
+      size: 142803
+      nfiles: 4
+    - path: reports/metrics/cv.json
+      hash: md5
+      md5: c9023ac3ec2ffa42491e38f41a0977df
+      size: 401
+    - path: reports/metrics/selected_model.json
+      hash: md5
+      md5: a7a0c5779969a9342e2a6b591dc08c11
+      size: 25
+  tune:
+    cmd: python -m ml_dice_game.pipeline tune
+    deps:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: 86a73892ecebeb014b5a4a582a612e02
+      size: 27648
+    - path: data/processed/train.csv
+      hash: md5
+      md5: e408c1888215f046802ac0108ddea959
+      size: 110182
+    - path: ml_dice_game/modeling/evaluate_test.py
+      hash: md5
+      md5: dce67a10d4599ed204cca6df4552a6a7
+      size: 1112
+    - path: ml_dice_game/modeling/tracking.py
+      hash: md5
+      md5: 6355a134aa3ab0fabbd45418784376de
+      size: 1414
+    - path: ml_dice_game/modeling/tune_best_model.py
+      hash: md5
+      md5: 3fc1c830eaeafb2f40021cc1f84caebe
+      size: 1161
+    - path: ml_dice_game/pipeline.py
+      hash: md5
+      md5: 7719de4880bbdbe1ae2c8e9cc8912538
+      size: 6561
+    - path: reports/metrics/selected_model.json
+      hash: md5
+      md5: a7a0c5779969a9342e2a6b591dc08c11
+      size: 25
+    params:
+      params.yaml:
+        mlflow:
+          experiment_name: ml_dice_game
+          registered_model_name: ml_dice_game_ventaja_classifier
+        random_state: 42
+        split:
+          test_size: 0.2
+          stratify_col: VENTAJA
+          cv_n_splits: 5
+        tune:
+          n_iter: 50
+          scoring: roc_auc
+          xgb_param_distributions:
+            n_estimators:
+            - 200
+            - 300
+            - 500
+            - 800
+            max_depth:
+            - 3
+            - 4
+            - 5
+            - 6
+            - 8
+            learning_rate:
+            - 0.01
+            - 0.03
+            - 0.05
+            - 0.1
+            - 0.2
+            subsample:
+            - 0.6
+            - 0.8
+            - 1.0
+            colsample_bytree:
+            - 0.6
+            - 0.8
+            - 1.0
+            min_child_weight:
+            - 1
+            - 3
+            - 5
+            reg_alpha:
+            - 0
+            - 0.01
+            - 0.1
+            - 1
+            reg_lambda:
+            - 1
+            - 1.5
+            - 2
+            - 5
+          rf_param_distributions:
+            n_estimators:
+            - 200
+            - 300
+            - 500
+            - 800
+            max_depth:
+            - 
+            - 5
+            - 10
+            - 15
+            - 20
+            min_samples_split:
+            - 2
+            - 5
+            - 10
+            min_samples_leaf:
+            - 1
+            - 2
+            - 4
+            max_features:
+            - sqrt
+            - log2
+            - 0.5
+            - 
+    outs:
+    - path: models/final/features.json
+      hash: md5
+      md5: d43fcb11e90697c75302fe7c0c1ae632
+      size: 207
+    - path: models/final/model.pkl
+      hash: md5
+      md5: 175d20479e0d2dfd8490e1bb537cdfed
+      size: 2212191
+    - path: reports/figures/test
+      hash: md5
+      md5: 3c6566d8931c397becfbafc8ee68a7aa.dir
+      size: 64936
+      nfiles: 2
+    - path: reports/metrics/test.json
+      hash: md5
+      md5: f50e1022fbd4ae95eef63b69675dbd39
+      size: 170
+  explain:
+    cmd: python -m ml_dice_game.pipeline explain
+    deps:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: 86a73892ecebeb014b5a4a582a612e02
+      size: 27648
+    - path: ml_dice_game/explain.py
+      hash: md5
+      md5: e12f730835ae25e7c955efbcbb8f5411
+      size: 3706
+    - path: ml_dice_game/pipeline.py
+      hash: md5
+      md5: 7719de4880bbdbe1ae2c8e9cc8912538
+      size: 6561
+    - path: models/final/model.pkl
+      hash: md5
+      md5: 175d20479e0d2dfd8490e1bb537cdfed
+      size: 2212191
+    outs:
+    - path: reports/figures/shap
+      hash: md5
+      md5: 40a5e03a62626f0a2a72aa67ca641e80.dir
+      size: 442820
+      nfiles: 2

@@ -1,33 +1,45 @@
-# api/schemas.py
-import json
-
-from pydantic import BaseModel, ConfigDict, create_model
-from ml_dice_game.config import MODELS_DIR
-
-_feature_cols = json.load(open(MODELS_DIR / "model.features.json"))
-_example_row = {column: 1.0 for column in _feature_cols}
-
-# Genera dinamicamente un modelo Pydantic con un campo float por cada feature.
-PredictRequest = create_model(
-    "PredictRequest",
-    __config__=ConfigDict(json_schema_extra={"examples": [_example_row]}),
-    **{col: (float, ...) for col in _feature_cols},
-)
+from pydantic import BaseModel, ConfigDict, Field
 
 
-class PredictResponse(BaseModel):
+class PredictionRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    C1A: int = Field(...)
+    C1B: int = Field(...)
+    C1C: int = Field(...)
+    C2A: int = Field(...)
+    C2B: int = Field(...)
+    C2C: int = Field(...)
+    C3A: int = Field(...)
+    C3B: int = Field(...)
+    C3C: int = Field(...)
+    T1A: int = Field(...)
+    T1B: int = Field(...)
+    T1C: int = Field(...)
+    T2A: int = Field(...)
+    T2B: int = Field(...)
+    T2C: int = Field(...)
+    T3A: int = Field(...)
+    T3B: int = Field(...)
+    T3C: int = Field(...)
+    RONDA: int = Field(...)
+    TURNO: int = Field(...)
+
+
+class PredictionResponse(BaseModel):
     prediction: int
     probability: float
-    model_source: str
+
+
+class HealthResponse(BaseModel):
+    status: str
+    model_loaded: bool
 
 
 class BatchPredictRequest(BaseModel):
-    rows: list[PredictRequest]
+    rows: list[PredictionRequest]
 
-    model_config = ConfigDict(
-        json_schema_extra={"examples": [
-            {"rows": [_example_row, _example_row]}]}
-    )
+    model_config = ConfigDict(extra="forbid")
 
 
 class BatchPredictResponse(BaseModel):
